@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, SpotType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SearchSpotsDto } from './dto/search-spots.dto';
+import { GooglePlacesService } from '../google-places/google-places.service';
 
 function haversineKm(aLat: number, aLng: number, bLat: number, bLng: number) {
   const toRad = (x: number) => (x * Math.PI) / 180;
@@ -16,7 +17,10 @@ function haversineKm(aLat: number, aLng: number, bLat: number, bLng: number) {
 
 @Injectable()
 export class SpotsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly googlePlaces: GooglePlacesService,
+  ) {}
 
   async search(q: SearchSpotsDto) {
     const where: Prisma.SpotWhereInput = {};
@@ -24,15 +28,65 @@ export class SpotsService {
     if (q.district) where.district = { contains: q.district, mode: 'insensitive' };
     if (q.sport) where.sports = { has: q.sport };
 
+    const lat = q.lat ? Number(q.lat) : undefined;
+    const lng = q.lng ? Number(q.lng) : undefined;
+    const radiusKm = q.radiusKm ? Number(q.radiusKm) : undefined;
+
+    // If caller provides lat/lng and we have Google Places API key, enrich DB with Google gyms/parks nearby.
+    if (lat != null && lng != null) {
+      const includedTypes: string[] = [];
+      // Map our filters to Google Place types when possible
+      if (q.type === 'indoor') includedTypes.push('gym');
+      if (q.type === 'outdoor') includedTypes.push('park');
+      if (!includedTypes.length) includedTypes.push('gym', 'park');
+
+      const places = await this.googlePlaces.searchNearby({
+        center: { latitude: lat, longitude: lng },
+        radiusMeters: Math.max(1000, Math.min(50_000, Math.round((radiusKm ?? 10) * 1000))),
+        includedTypes,
+        maxResultCount: 20,
+      });
+
+      for (const p of places) {
+        const name = p.displayName?.text ?? 'Unknown';
+        const address = p.formattedAddress ?? '';
+        const plat = p.location?.latitude;
+        const plng = p.location?.longitude;
+        if (typeof plat !== 'number' || typeof plng !== 'number') continue;
+
+        const spotType: SpotType =
+          p.types?.includes('park') ? 'outdoor' : 'indoor';
+
+        // Upsert into our DB so downstream endpoints (detail/reviews) work.
+        await this.prisma.spot.upsert({
+          where: { id: p.id },
+          update: {
+            name,
+            address,
+            lat: plat,
+            lng: plng,
+            type: spotType,
+          },
+          create: {
+            id: p.id,
+            name,
+            address,
+            lat: plat,
+            lng: plng,
+            type: spotType,
+            facilities: [],
+            sports: [],
+            imageUrls: [],
+          },
+        });
+      }
+    }
+
     const spots = await this.prisma.spot.findMany({
       where,
       orderBy: q.sort === 'rating' ? { avgRating: 'desc' } : undefined,
       take: 200,
     });
-
-    const lat = q.lat ? Number(q.lat) : undefined;
-    const lng = q.lng ? Number(q.lng) : undefined;
-    const radiusKm = q.radiusKm ? Number(q.radiusKm) : undefined;
 
     let enriched = spots.map((s) => ({
       ...s,
@@ -65,4 +119,3 @@ export class SpotsService {
     });
   }
 }
-

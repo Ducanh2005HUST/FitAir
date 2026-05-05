@@ -11,6 +11,7 @@ import { IndoorModule } from '../indoor/indoor.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { EnvironmentModule } from '../environment/environment.module';
 import { HealthModule } from '../health/health.module';
+import { GooglePlacesModule } from '../google-places/google-places.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { HealthModule } from '../health/health.module';
     NotificationsModule,
     EnvironmentModule,
     HealthModule,
+    GooglePlacesModule,
   ],
 })
 export class AppModule {}
