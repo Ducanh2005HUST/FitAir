@@ -9,15 +9,39 @@ import type {
 } from './types';
 
 export const apiClient = {
-  aqi() {
-    return http<{ aqi: number; category: string; updatedAt: string }>('/environment/aqi');
+  aqi(params?: { lat?: number; lng?: number }) {
+    const search = new URLSearchParams();
+    if (params?.lat != null) search.set('lat', String(params.lat));
+    if (params?.lng != null) search.set('lng', String(params.lng));
+    const q = search.toString();
+    return http<{ aqi: number; category: string; updatedAt: string }>(`/environment/aqi${q ? `?${q}` : ''}`);
   },
-  spots(params?: { sort?: 'rating' | 'distance'; district?: string; type?: 'indoor' | 'outdoor'; sport?: string }) {
+  weather(params?: { lat?: number; lng?: number }) {
+    const search = new URLSearchParams();
+    if (params?.lat != null) search.set('lat', String(params.lat));
+    if (params?.lng != null) search.set('lng', String(params.lng));
+    const q = search.toString();
+    return http<{ tempC: number; humidity: number; description?: string; updatedAt: string }>(
+      `/environment/weather${q ? `?${q}` : ''}`,
+    );
+  },
+  spots(params?: {
+    sort?: 'rating' | 'distance';
+    district?: string;
+    type?: 'indoor' | 'outdoor';
+    sport?: string;
+    lat?: number;
+    lng?: number;
+    radiusKm?: number;
+  }) {
     const search = new URLSearchParams();
     if (params?.sort) search.set('sort', params.sort);
     if (params?.district) search.set('district', params.district);
     if (params?.type) search.set('type', params.type);
     if (params?.sport) search.set('sport', params.sport);
+    if (params?.lat != null) search.set('lat', String(params.lat));
+    if (params?.lng != null) search.set('lng', String(params.lng));
+    if (params?.radiusKm != null) search.set('radiusKm', String(params.radiusKm));
     const q = search.toString();
     return http<SpotDto[]>(`/spots${q ? `?${q}` : ''}`);
   },
@@ -85,4 +109,3 @@ export const apiClient = {
     return http<any>(`/users/${encodeURIComponent(id)}`);
   },
 };
-

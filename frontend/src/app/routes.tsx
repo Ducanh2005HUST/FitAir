@@ -3,6 +3,7 @@ import { Layout } from "./components/Layout";
 import { RequireAuth } from "./auth/RequireAuth";
 import { Dashboard } from "./screens/Dashboard";
 import { Search } from "./screens/Search";
+import { MapScreen } from "./screens/MapScreen";
 import { LocationDetail } from "./screens/LocationDetail";
 import { Review } from "./screens/Review";
 import { IndoorTraining } from "./screens/IndoorTraining";
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: Dashboard },
       { path: "search", Component: Search },
+      { path: "map", Component: MapScreen },
       { path: "location/:id", Component: LocationDetail },
       { path: "review/:id", Component: Review },
       { path: "indoor", Component: IndoorTraining },

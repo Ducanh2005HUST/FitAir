@@ -1,14 +1,17 @@
-import { Home, Map, Users, User, Dumbbell, Calendar, LogOut, Search, MessageCircle, Compass } from 'lucide-react';
+import { Home, Users, User, Dumbbell, Calendar, LogOut, Search, Map } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
+import { useAuth } from '../auth/AuthContext';
 
 export function Sidebar() {
   const location = useLocation();
+  const { logout } = useAuth();
   
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
     { path: '/', icon: Home, label: 'ダッシュボード', labelVi: 'Trang chủ' },
     { path: '/search', icon: Search, label: '検索', labelVi: 'Tìm kiếm' },
+    { path: '/map', icon: Map, label: 'マップ', labelVi: 'Bản đồ' },
     { path: '/indoor', icon: Dumbbell, label: '室内トレーニング', labelVi: 'Tập trong nhà' },
     { path: '/schedule', icon: Calendar, label: 'スケジュール', labelVi: 'Lịch trình' },
     { path: '/community', icon: Users, label: 'コミュニティ', labelVi: 'Cộng đồng' },
@@ -50,13 +53,14 @@ export function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-gray-200">
-        <Link
-          to="/login"
+        <button
+          type="button"
+          onClick={() => logout()}
           className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
         >
           <LogOut className="w-5 h-5" />
           <span className="text-sm">ログアウト</span>
-        </Link>
+        </button>
       </div>
     </aside>
   );
