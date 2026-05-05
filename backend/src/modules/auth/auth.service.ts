@@ -1,0 +1,65 @@
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import bcrypt from 'bcryptjs';
+import { PrismaService } from '../prisma/prisma.service';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { OAuthTokenDto } from './dto/oauth-token.dto';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwt: JwtService,
+  ) {}
+
+  async register(dto: RegisterDto) {
+    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (existing) throw new BadRequestException('Email already exists');
+
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const user = await this.prisma.user.create({
+      data: { email: dto.email, name: dto.name, passwordHash },
+      select: { id: true, email: true, name: true },
+    });
+
+    const token = await this.jwt.signAsync({ sub: user.id });
+    return { user, token };
+  }
+
+  async login(dto: LoginDto) {
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (!user?.passwordHash) throw new UnauthorizedException('Invalid credentials');
+    const ok = await bcrypt.compare(dto.password, user.passwordHash);
+    if (!ok) throw new UnauthorizedException('Invalid credentials');
+
+    const token = await this.jwt.signAsync({ sub: user.id });
+    return {
+      user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl },
+      token,
+    };
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.passwordHash) throw new BadRequestException('Password not set');
+    const ok = await bcrypt.compare(dto.oldPassword, user.passwordHash);
+    if (!ok) throw new UnauthorizedException('Old password is incorrect');
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, 10);
+    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+    return { ok: true };
+  }
+
+  async forgotPassword(_dto: ForgotPasswordDto) {
+    // TODO: implement email flow. For now return ok to unblock frontend.
+    return { ok: true };
+  }
+
+  async oauthLogin(provider: 'google' | 'apple', _dto: OAuthTokenDto) {
+    // TODO: verify token with provider. For now return 501-like message.
+    return { ok: false, provider, message: 'OAuth not implemented yet' };
+  }
+}
