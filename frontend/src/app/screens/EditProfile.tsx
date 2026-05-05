@@ -15,6 +15,7 @@ export function EditProfile() {
     email: '',
     location: '',
     bio: '',
+    avatarUrl: '',
   });
 
   const [favoriteSports, setFavoriteSports] = useState(['ランニング', 'ヨガ', '筋トレ']);
@@ -28,6 +29,7 @@ export function EditProfile() {
       email: me.email ?? '',
       location: me.location ?? '',
       bio: me.bio ?? '',
+      avatarUrl: me.avatarUrl ?? '',
     });
   }, [me]);
 
@@ -41,6 +43,7 @@ export function EditProfile() {
         token,
         body: JSON.stringify({
           name: formData.name,
+          avatarUrl: formData.avatarUrl || null,
           location: formData.location || null,
           bio: formData.bio || null,
         }),
@@ -92,10 +95,41 @@ export function EditProfile() {
           <div className="p-6 md:p-8 space-y-6">
             {/* Profile Picture */}
             <div className="flex flex-col items-center gap-4">
-              <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 border-4 border-white shadow-sm">
-                <span className="text-5xl">👤</span>
+              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-sm bg-blue-100 flex items-center justify-center">
+                {formData.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={formData.avatarUrl} alt="avatar" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-5xl">👤</span>
+                )}
               </div>
-              <Button type="button" variant="outline" size="sm">
+              <input
+                id="avatar-file"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 500 * 1024) {
+                    toast.error('画像が大きすぎます', { description: 'Vui lòng chọn ảnh < 500KB' });
+                    e.currentTarget.value = '';
+                    return;
+                  }
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    const dataUrl = String(reader.result ?? '');
+                    setFormData((p) => ({ ...p, avatarUrl: dataUrl }));
+                  };
+                  reader.readAsDataURL(file);
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => document.getElementById('avatar-file')?.click()}
+              >
                 写真を変更 / Đổi ảnh đại diện
               </Button>
             </div>

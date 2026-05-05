@@ -12,6 +12,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { EnvironmentModule } from '../environment/environment.module';
 import { HealthModule } from '../health/health.module';
 import { GooglePlacesModule } from '../google-places/google-places.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { GooglePlacesModule } from '../google-places/google-places.module';
     EnvironmentModule,
     HealthModule,
     GooglePlacesModule,
+    MailModule,
   ],
 })
 export class AppModule {}
