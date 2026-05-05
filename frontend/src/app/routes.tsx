@@ -17,6 +17,8 @@ import { EditProfile } from "./screens/EditProfile";
 import { ChangePassword } from "./screens/ChangePassword";
 import { Chat } from "./screens/Chat";
 import { NotFound } from "./screens/NotFound";
+import { ForgotPassword } from "./screens/ForgotPassword";
+import { ResetPassword } from "./screens/ResetPassword";
 
 export const router = createBrowserRouter([
   {
@@ -50,5 +52,13 @@ export const router = createBrowserRouter([
   {
     path: "/register",
     Component: Register,
+  },
+  {
+    path: "/forgot-password",
+    Component: ForgotPassword,
+  },
+  {
+    path: "/reset-password",
+    Component: ResetPassword,
   },
 ]);

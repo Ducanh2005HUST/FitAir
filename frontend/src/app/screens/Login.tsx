@@ -96,10 +96,9 @@ export function Login() {
             {/* Forgot Password Link */}
             <div className="flex justify-end pt-1">
               <Link 
-                to="#" 
+                to="/forgot-password"
                 onClick={(e) => {
-                  e.preventDefault();
-                  toast.message('パスワード再設定', { description: '登録メール宛に送信するフローは後で実装します。' });
+                  // allow navigation
                 }}
                 className="text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors"
               >
