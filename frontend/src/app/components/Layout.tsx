@@ -4,8 +4,10 @@ import { BottomNav } from './BottomNav';
 import { Bell } from 'lucide-react';
 import { useState } from 'react';
 import { NotificationDialog } from './NotificationDialog';
+import { useAuth } from '../auth/AuthContext';
 
 export function Layout() {
+  const { token } = useAuth();
   const [showNotification, setShowNotification] = useState(false);
 
   return (
@@ -24,7 +26,7 @@ export function Layout() {
               className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full"
             >
               <Bell className="w-6 h-6" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              {token ? <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span> : null}
             </button>
           </div>
         </header>
@@ -36,7 +38,7 @@ export function Layout() {
               className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full"
             >
               <Bell className="w-6 h-6" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              {token ? <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span> : null}
             </button>
           </div>
         </header>

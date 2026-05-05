@@ -13,31 +13,45 @@ import { useEffect, useState } from "react";
 import { http } from "../api/http";
 import { spotToLocation } from "../mappers/location";
 import type { SpotDto } from "../api/types";
+import { useUserLocation } from "../location/useUserLocation";
+import { apiClient } from "../api/client";
 
 export function Dashboard() {
-  const [aqi, setAqi] = useState<{ aqi: number; category: string } | null>(null);
+  const [aqi, setAqi] = useState<{ aqi: number; category: string; updatedAt?: string } | null>(null);
+  const [weather, setWeather] = useState<{ tempC: number; humidity: number; description?: string; updatedAt?: string } | null>(null);
   const [nearbyLocations, setNearbyLocations] = useState<any[]>([]);
+  const { coords } = useUserLocation();
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const aqiOut = await http<{ aqi: number; category: string }>('/environment/aqi');
-        const spots = await http<SpotDto[]>(`/spots?sort=rating`);
+        const [aqiOut, weatherOut] = await Promise.all([
+          apiClient.aqi({ lat: coords?.lat, lng: coords?.lng }),
+          apiClient.weather({ lat: coords?.lat, lng: coords?.lng }),
+        ]);
+        const spots = await apiClient.spots({
+          sort: coords ? 'distance' : 'rating',
+          lat: coords?.lat,
+          lng: coords?.lng,
+          radiusKm: 20,
+        });
         if (cancelled) return;
         setAqi(aqiOut);
+        setWeather(weatherOut);
         setNearbyLocations(spots.slice(0, 3).map((s) => spotToLocation(s, aqiOut.aqi)));
       } catch {
         // fallback to mock
         if (cancelled) return;
         setAqi({ aqi: currentAQI.value, category: 'mock' });
+        setWeather({ tempC: currentAQI.temperature, humidity: currentAQI.humidity, description: 'mock' });
         setNearbyLocations([]);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [coords?.lat, coords?.lng]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 md:px-8 md:py-8">
@@ -52,20 +66,27 @@ export function Dashboard() {
       {/* Current AQI Card */}
       <div className="mb-8">
         <AQIIndicator value={aqi?.aqi ?? currentAQI.value} size="large" />
+        <div className="mt-3 text-sm text-gray-600">
+          <span className="font-medium">AQI</span>: {aqi?.category ?? '—'}
+          {aqi?.updatedAt ? <span className="text-xs text-gray-500"> • {new Date(aqi.updatedAt).toLocaleString()}</span> : null}
+        </div>
 
         <div className="mt-4 grid grid-cols-2 gap-4">
           <div className="bg-white rounded-xl p-4 border border-gray-100">
             <div className="text-2xl mb-1">
-              🌡️ {currentAQI.temperature}°C
+              🌡️ {(weather?.tempC ?? currentAQI.temperature).toFixed(1)}°C
             </div>
             <div className="text-sm text-gray-600">
               温度 / Nhiệt độ
             </div>
+            {weather?.description ? (
+              <div className="mt-1 text-xs text-gray-500">{weather.description}</div>
+            ) : null}
           </div>
 
           <div className="bg-white rounded-xl p-4 border border-gray-100">
             <div className="text-2xl mb-1">
-              💧 {currentAQI.humidity}%
+              💧 {Math.round(weather?.humidity ?? currentAQI.humidity)}%
             </div>
             <div className="text-sm text-gray-600">
               湿度 / Độ ẩm

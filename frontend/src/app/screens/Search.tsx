@@ -5,6 +5,8 @@ import type { Location } from '../data/mockData';
 import { http } from '../api/http';
 import { spotToLocation } from '../mappers/location';
 import type { SpotDto } from '../api/types';
+import { useUserLocation } from '../location/useUserLocation';
+import { apiClient } from '../api/client';
 
 const districts = [
   { id: 'all', label: 'すべての地区 / Tất cả quận', labelShort: 'すべて / Tất cả' },
@@ -43,13 +45,19 @@ export function Search() {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [aqiValue, setAqiValue] = useState<number>(75);
   const [locationsData, setLocationsData] = useState<Location[]>([]);
+  const { coords } = useUserLocation();
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const aqiOut = await http<{ aqi: number }>('/environment/aqi');
-        const spots = await http<SpotDto[]>('/spots?sort=rating');
+        const aqiOut = await apiClient.aqi({ lat: coords?.lat, lng: coords?.lng });
+        const spots = await apiClient.spots({
+          sort: coords ? 'distance' : 'rating',
+          lat: coords?.lat,
+          lng: coords?.lng,
+          radiusKm: 30,
+        });
         if (cancelled) return;
         setAqiValue(aqiOut.aqi);
         setLocationsData(spots.map((s) => spotToLocation(s, aqiOut.aqi)));
@@ -61,7 +69,7 @@ export function Search() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [coords?.lat, coords?.lng]);
 
   const filteredLocations = useMemo(() => {
     let filtered = locationsData.filter((location) => {
@@ -110,11 +118,17 @@ export function Search() {
     return '#E53935';
   };
 
-  const getMarkerPosition = (id: number) => {
-    const seed = id * 1234;
+  const getMarkerPosition = (id: string) => {
+    const seed = hashToInt(id) * 1234;
     const x = 20 + ((seed * 9301 + 49297) % 233280 / 233280) * 60; 
     const y = 15 + ((seed * 4567 + 12345) % 233280 / 233280) * 70; 
     return { x, y };
+  };
+  
+  const hashToInt = (s: string) => {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return h;
   };
 
   const FilterPanel = () => (
