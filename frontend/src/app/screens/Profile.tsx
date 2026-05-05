@@ -23,8 +23,13 @@ export function Profile() {
       <div className="bg-white rounded-[16px] border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-6 md:p-8">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8">
-            <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 border-4 border-white shadow-sm">
-              <span className="text-5xl">👤</span>
+            <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 border-4 border-white shadow-sm overflow-hidden">
+              {me?.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={me.avatarUrl} alt="avatar" className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-5xl">👤</span>
+              )}
             </div>
 
             <div className="flex-1 text-center md:text-left">
