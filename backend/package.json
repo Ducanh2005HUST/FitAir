@@ -13,7 +13,8 @@
     "prisma:migrate": "HOME=./.home CACHE_DIR=./.cache prisma migrate dev",
     "prisma:migrate:init": "HOME=./.home CACHE_DIR=./.cache prisma migrate dev --name init",
     "prisma:studio": "HOME=./.home CACHE_DIR=./.cache prisma studio",
-    "prisma:seed": "ts-node-dev --transpile-only prisma/seed.ts"
+    "prisma:seed": "ts-node-dev --transpile-only prisma/seed.ts",
+    "prisma:purge:demo": "ts-node-dev --transpile-only prisma/purge-demo.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.0",

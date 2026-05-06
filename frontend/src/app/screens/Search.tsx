@@ -56,7 +56,7 @@ export function Search() {
           sort: coords ? 'distance' : 'rating',
           lat: coords?.lat,
           lng: coords?.lng,
-          radiusKm: 30,
+          radiusKm: 10,
         });
         if (cancelled) return;
         setAqiValue(aqiOut.aqi);

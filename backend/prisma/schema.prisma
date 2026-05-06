@@ -64,6 +64,8 @@ model Spot {
   lat         Float
   lng         Float
   type        SpotType
+  source      String?  // demo | serpapi | google | manual
+  sourceRefreshedAt DateTime?
   price       String?
   hours       String?
   facilities  String[] @default([])
@@ -75,6 +77,8 @@ model Spot {
   updatedAt   DateTime @updatedAt
 
   reviews     SpotReview[]
+
+  @@index([source, sourceRefreshedAt])
 }
 
 model SpotReview {

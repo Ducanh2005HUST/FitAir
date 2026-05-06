@@ -30,6 +30,14 @@ Frontend env:
 - Tạo file `frontend/.env.local` dựa theo `frontend/.env.example`
 - `VITE_API_BASE_URL` mặc định: `http://127.0.0.1:4000`
 
+## SerpApi (Google Maps Local Results)
+
+Backend có thể lấy danh sách gym/công viên quanh vị trí người dùng thông qua SerpApi (ưu tiên), và tự lưu (upsert) vào DB để các màn hình Spot/Review dùng chung.
+
+- Điền `SERPAPI_API_KEY` trong `backend/.env`
+- Restart backend
+- Frontend sẽ tự xin quyền location và gửi `lat/lng` lên API khi load trang Dashboard/Map/Search
+
 ## Chạy backend (NestJS)
 
 ```bash
@@ -39,6 +47,9 @@ npm run prisma:generate -w @fitair/backend
 # Lần đầu setup DB:
 npm run prisma:migrate:init -w @fitair/backend
 npm run prisma:seed -w @fitair/backend
+
+# Nếu DB trước đây đã seed demo, xoá demo:
+npm run prisma:purge:demo -w @fitair/backend
 
 npm run start:dev -w @fitair/backend
 ```
@@ -71,4 +82,3 @@ npm run dev
 ## Neon (Postgres)
 
 Xem thêm: `docs/NEON.md`
-

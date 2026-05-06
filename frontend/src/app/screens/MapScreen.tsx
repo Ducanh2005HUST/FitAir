@@ -1,10 +1,27 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { List, MapPin, X } from 'lucide-react';
 import { Link } from 'react-router';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import { apiClient } from '../api/client';
 import type { SpotDto } from '../api/types';
 import { useUserLocation } from '../location/useUserLocation';
+import { http } from '../api/http';
+import { googleMapsDirectionsUrl } from '../utils/maps';
+
+function toYoutubeEmbed(url: string) {
+  // supports https://www.youtube.com/watch?v=... and https://youtu.be/...
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes('youtu.be')) {
+      const id = u.pathname.replace('/', '');
+      return id ? `https://www.youtube.com/embed/${id}` : url;
+    }
+    const id = u.searchParams.get('v');
+    return id ? `https://www.youtube.com/embed/${id}` : url;
+  } catch {
+    return url;
+  }
+}
 
 export function MapScreen() {
   const [spots, setSpots] = useState<SpotDto[]>([]);
@@ -12,22 +29,39 @@ export function MapScreen() {
   const [selectedDistrict, setSelectedDistrict] = useState<string>('all');
   const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [videoModal, setVideoModal] = useState<{ open: boolean; youtubeUrl?: string; title?: string }>({ open: false });
   const { coords } = useUserLocation({ watch: true });
+  const cacheRef = useRef(new Map<string, SpotDto[]>());
+
+  const coordKey = useMemo(() => {
+    if (!coords) return 'hanoi-default';
+    // Round so watch-position small jitter doesn't refetch constantly
+    return `${coords.lat.toFixed(3)},${coords.lng.toFixed(3)}`;
+  }, [coords]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
+        const cached = cacheRef.current.get(coordKey);
+        if (cached) setSpots(cached);
+
         const aqiOut = await apiClient.aqi({ lat: coords?.lat, lng: coords?.lng });
         const s = await apiClient.spots({
           sort: coords ? 'distance' : 'rating',
           lat: coords?.lat,
           lng: coords?.lng,
-          radiusKm: 30,
+          radiusKm: 10,
         });
         if (cancelled) return;
         setAqi(aqiOut.aqi);
-        setSpots(s);
+        const prev = cacheRef.current.get(coordKey) ?? [];
+        const merged = new Map<string, SpotDto>();
+        for (const p of prev) merged.set(p.id, p);
+        for (const n of s) merged.set(n.id, n);
+        const out = Array.from(merged.values());
+        cacheRef.current.set(coordKey, out);
+        setSpots(out);
       } catch {
         if (cancelled) return;
         setSpots([]);
@@ -36,7 +70,7 @@ export function MapScreen() {
     return () => {
       cancelled = true;
     };
-  }, [coords?.lat, coords?.lng]);
+  }, [coordKey, coords?.lat, coords?.lng]);
 
   const districts = useMemo(() => {
     const set = new Set<string>();
@@ -70,6 +104,32 @@ export function MapScreen() {
 
   return (
     <div className="h-[calc(100vh-8rem)] md:h-[calc(100vh-5rem)] bg-gray-50 flex flex-col md:flex-row overflow-hidden relative">
+      {videoModal.open ? (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+              <div className="text-sm font-medium truncate">{videoModal.title ?? 'Indoor training'}</div>
+              <button
+                className="p-2 rounded-lg hover:bg-gray-100"
+                onClick={() => setVideoModal({ open: false })}
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              <iframe
+                className="absolute inset-0 h-full w-full"
+                src={videoModal.youtubeUrl ? toYoutubeEmbed(videoModal.youtubeUrl) : undefined}
+                title={videoModal.title ?? 'Indoor training'}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div
         className={`
           hidden md:flex md:flex-col
@@ -176,6 +236,42 @@ export function MapScreen() {
                       詳細を見る
                     </Link>
                   </div>
+                  <button
+                    className="mt-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs hover:bg-gray-50"
+                    onClick={() => {
+                      window.open(
+                        googleMapsDirectionsUrl({
+                          destinationLat: s.lat,
+                          destinationLng: s.lng,
+                          originLat: coords?.lat,
+                          originLng: coords?.lng,
+                          travelMode: 'walking',
+                        }),
+                        '_blank',
+                        'noreferrer',
+                      );
+                    }}
+                  >
+                    Google Mapsでナビ / Chỉ đường
+                  </button>
+                  {s.type === 'indoor' ? (
+                    <button
+                      className="mt-2 w-full rounded-lg bg-blue-600 px-3 py-2 text-xs text-white hover:bg-blue-700"
+                      onClick={async () => {
+                        try {
+                          const list = await http<any[]>('/videos');
+                          const first = list?.[0];
+                          if (first?.youtubeUrl) {
+                            setVideoModal({ open: true, youtubeUrl: first.youtubeUrl, title: first.titleJp ?? first.titleVn ?? s.name });
+                          }
+                        } catch {
+                          // ignore
+                        }
+                      }}
+                    >
+                      室内動画を見る / Xem video
+                    </button>
+                  ) : null}
                 </div>
               </Popup>
             </CircleMarker>
