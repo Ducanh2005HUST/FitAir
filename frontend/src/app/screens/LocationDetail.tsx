@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { http } from '../api/http';
 import { spotToLocation } from '../mappers/location';
 import type { SpotDto } from '../api/types';
+import { googleMapsDirectionsUrl } from '../utils/maps';
+import { useUserLocation } from '../location/useUserLocation';
 
 export function LocationDetail() {
   const { id } = useParams();
@@ -13,6 +15,7 @@ export function LocationDetail() {
   const fromPostId = searchParams.get('fromPost');
   const [aqiValue, setAqiValue] = useState<number>(75);
   const [spot, setSpot] = useState<SpotDto | null>(null);
+  const { coords } = useUserLocation();
   const [reviews, setReviews] = useState<
     { id: string; rating: number; comment?: string | null; createdAt: string; user?: { name?: string | null } }[]
   >([]);
@@ -179,9 +182,24 @@ export function LocationDetail() {
 
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <button className="flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors">
+          <button
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors"
+            onClick={() => {
+              window.open(
+                googleMapsDirectionsUrl({
+                  destinationLat: location.lat,
+                  destinationLng: location.lng,
+                  originLat: coords?.lat,
+                  originLng: coords?.lng,
+                  travelMode: 'walking',
+                }),
+                '_blank',
+                'noreferrer',
+              );
+            }}
+          >
             <Navigation className="w-5 h-5" />
-            <span>ナビゲート</span>
+            <span>ナビゲート / Chỉ đường</span>
           </button>
           
           <Link
