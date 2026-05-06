@@ -1,5 +1,5 @@
 {
-  "last_reminder": 0,
+  "last_reminder": 1778079471623,
   "cached_at": 1778077355058,
   "version": "5.22.0",
   "cli_path": "/Users/mac/Downloads/FitAir/node_modules/.bin/prisma",
@@ -29,7 +29,7 @@
   },
   "product": "prisma",
   "cli_install_type": "local",
-  "local_timestamp": "2026-05-05T21:20:17+07:00",
+  "local_timestamp": "2026-05-06T21:59:00+07:00",
   "project_hash": "98312dfc",
   "cli_path_hash": "27eb0a8c",
   "endpoint": "https://checkpoint.prisma.io",
