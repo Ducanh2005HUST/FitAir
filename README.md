@@ -38,6 +38,13 @@ Backend có thể lấy danh sách gym/công viên quanh vị trí người dùn
 - Restart backend
 - Frontend sẽ tự xin quyền location và gửi `lat/lng` lên API khi load trang Dashboard/Map/Search
 
+## YouTube search (Indoor training)
+
+- Bạn có 2 cách lấy video mới nhất:
+  - (Khuyến nghị) Dùng SerpApi: điền `SERPAPI_API_KEY` trong `backend/.env` (backend sẽ dùng engine `youtube`)
+  - Hoặc dùng YouTube Data API: điền `YOUTUBE_API_KEY` trong `backend/.env`
+- Frontend dùng nút `最新を取得 / Load latest` để gọi `POST /videos/sync` và cập nhật DB
+
 ## Chạy backend (NestJS)
 
 ```bash

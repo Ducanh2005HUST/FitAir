@@ -33,6 +33,10 @@ export class SerpApiService {
     return trimmed;
   }
 
+  hasApiKey() {
+    return Boolean(this.apiKey());
+  }
+
   async googleMapsSearch(input: {
     q: string;
     lat: number;
@@ -90,6 +94,78 @@ export class SerpApiService {
       });
     } catch {
       return [];
+    } finally {
+      clearTimeout(t);
+    }
+  }
+
+  async youtubeSearch(input: {
+    searchQuery: string;
+    sp?: string; // pagination/filter token
+    hl?: string;
+    gl?: string;
+    noCache?: boolean;
+  }): Promise<{ items: { videoId: string; title: string; channelName?: string; length?: string; thumbnailUrl?: string; link: string }[]; nextPageToken?: string }> {
+    const key = this.apiKey();
+    if (!key) return { items: [] };
+
+    const q = (input.searchQuery ?? '').trim();
+    if (!q) return { items: [] };
+
+    const params = new URLSearchParams();
+    params.set('engine', 'youtube');
+    params.set('search_query', q);
+    params.set('api_key', key);
+    params.set('hl', input.hl ?? 'en');
+    params.set('gl', input.gl ?? 'us');
+    if (input.sp) params.set('sp', input.sp);
+    if (input.noCache ?? true) params.set('no_cache', 'true');
+
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 10_000);
+    try {
+      const url = `https://serpapi.com/search.json?${params.toString()}`;
+      const res = await fetch(url, { method: 'GET', signal: ctrl.signal });
+      const data = (await res.json()) as any;
+      if (!res.ok) {
+        // eslint-disable-next-line no-console
+        console.warn('[SerpApi:YouTube] non-200 response', res.status, data?.error ?? data);
+        return { items: [] };
+      }
+      if (typeof data?.error === 'string' && data.error.length) {
+        // eslint-disable-next-line no-console
+        console.warn('[SerpApi:YouTube] error', data.error);
+        return { items: [] };
+      }
+
+      const videoResults = Array.isArray(data?.video_results) ? data.video_results : [];
+      const items = videoResults
+        .map((r: any) => {
+          const videoId = r?.video_id;
+          const title = r?.title;
+          const link = r?.link;
+          const channelName = r?.channel?.name;
+          const length = r?.length;
+          const thumbnailUrl = r?.thumbnail?.static ?? r?.thumbnail;
+          if (typeof videoId !== 'string' || !videoId) return null;
+          return {
+            videoId,
+            title: typeof title === 'string' ? title : '',
+            channelName: typeof channelName === 'string' ? channelName : undefined,
+            length: typeof length === 'string' ? length : undefined,
+            thumbnailUrl: typeof thumbnailUrl === 'string' ? thumbnailUrl : undefined,
+            link: typeof link === 'string' ? link : `https://www.youtube.com/watch?v=${videoId}`,
+          };
+        })
+        .filter(Boolean);
+
+      const nextPageToken =
+        (typeof data?.pagination?.next_page_token === 'string' ? data.pagination.next_page_token : undefined) ??
+        (typeof data?.serpapi_pagination?.next_page_token === 'string' ? data.serpapi_pagination.next_page_token : undefined);
+
+      return { items, nextPageToken };
+    } catch {
+      return { items: [] };
     } finally {
       clearTimeout(t);
     }

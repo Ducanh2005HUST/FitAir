@@ -1,36 +1,54 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Play, Clock } from 'lucide-react';
-import { useNavigate } from 'react-router';
 import { AQIIndicator } from '../components/AQIIndicator';
 import { currentAQI } from '../data/mockData';
 import { http } from '../api/http';
+import { VideoModal } from '../components/VideoModal';
 
 export function IndoorTraining() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const navigate = useNavigate();
   const [aqi, setAqi] = useState<number>(currentAQI.value);
   const [videos, setVideos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [videoModal, setVideoModal] = useState<{ open: boolean; youtubeUrl?: string; title?: string }>({ open: false });
 
   const categories = [
     { id: 'all', label: 'すべて', labelVi: 'Tất cả' },
-    { id: 'ヨガ', label: 'ヨガ', labelVi: 'Yoga' },
-    { id: 'ストレッチ', label: 'ストレッチ', labelVi: 'Khởi động' },
-    { id: '有酸素', label: '有酸素', labelVi: 'Cardio' },
-    { id: '筋トレ', label: '筋トレ', labelVi: 'Tập cơ' },
+    { id: 'yoga', label: 'ヨガ', labelVi: 'Yoga' },
+    { id: 'stretch', label: 'ストレッチ', labelVi: 'Giãn cơ' },
+    { id: 'cardio', label: '有酸素', labelVi: 'Cardio' },
+    { id: 'strength', label: '筋トレ', labelVi: 'Tập cơ' },
   ];
+
+  const pageSize = 40;
+
+  const loadPage = async (opts: { reset: boolean }) => {
+    setLoading(true);
+    try {
+      const skip = opts.reset ? 0 : videos.length;
+      const categoryParam = selectedCategory === 'all' ? '' : `category=${encodeURIComponent(selectedCategory)}&`;
+      const out = await http<any[]>(`/videos?${categoryParam}take=${pageSize}&skip=${skip}`);
+      const next = opts.reset ? out : [...videos, ...out];
+      setVideos(next);
+      setHasMore(out.length === pageSize);
+    } catch {
+      if (opts.reset) setVideos([]);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const aqiOut = await http<{ aqi: number }>('/environment/aqi');
-        const v = await http<any[]>('/videos');
-        if (cancelled) return;
-        setAqi(aqiOut.aqi);
-        setVideos(v);
+        if (!cancelled) setAqi(aqiOut.aqi);
       } catch {
-        if (cancelled) return;
-        setVideos([]);
+        // ignore
       }
     })();
     return () => {
@@ -38,13 +56,38 @@ export function IndoorTraining() {
     };
   }, []);
 
-  const filteredVideos = useMemo(() => {
-    if (selectedCategory === 'all') return videos;
-    return videos.filter((video) => video.category === selectedCategory);
-  }, [videos, selectedCategory]);
+  useEffect(() => {
+    // reset list when category changes
+    loadPage({ reset: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory]);
+
+  const handleRefreshLatest = async () => {
+    setSyncing(true);
+    try {
+      await http('/videos/sync', {
+        method: 'POST',
+        body: JSON.stringify({
+          category: selectedCategory,
+          max: 40,
+        }),
+      });
+    } catch {
+      // ignore
+    } finally {
+      setSyncing(false);
+    }
+    await loadPage({ reset: true });
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 md:px-8 md:py-8">
+      <VideoModal
+        open={videoModal.open}
+        youtubeUrl={videoModal.youtubeUrl}
+        title={videoModal.title}
+        onClose={() => setVideoModal({ open: false })}
+      />
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl mb-2">室内トレーニング</h1>
@@ -93,12 +136,31 @@ export function IndoorTraining() {
         </div>
       </div>
 
+      <div className="mb-4 flex items-center justify-between">
+        <div className="text-sm text-gray-600">
+          {videos.length} videos
+        </div>
+        <button
+          onClick={handleRefreshLatest}
+          disabled={syncing}
+          className="rounded-xl bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-60"
+        >
+          {syncing ? 'Loading…' : '最新を取得 / Load latest'}
+        </button>
+      </div>
+
       {/* Video Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {filteredVideos.map((video) => (
+        {videos.map((video) => (
           <div
             key={video.id}
-            onClick={() => navigate(`/video/${video.id}`)}
+            onClick={() =>
+              setVideoModal({
+                open: true,
+                youtubeUrl: video.youtubeUrl,
+                title: video.titleJp ?? video.titleVn ?? 'Video',
+              })
+            }
             className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100 cursor-pointer group"
           >
             <div className="relative">
@@ -130,6 +192,20 @@ export function IndoorTraining() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="mb-10 flex items-center justify-center">
+        {hasMore ? (
+          <button
+            onClick={() => loadPage({ reset: false })}
+            disabled={loading}
+            className="rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm hover:bg-gray-50 disabled:opacity-60"
+          >
+            {loading ? 'Loading…' : 'もっと見る / Load more'}
+          </button>
+        ) : (
+          <div className="text-xs text-gray-500">No more videos</div>
+        )}
       </div>
 
       {/* Benefits Section */}
