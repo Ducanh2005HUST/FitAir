@@ -9,6 +9,15 @@ import type {
 } from './types';
 
 export const apiClient = {
+  pushPublicKey() {
+    return http<{ publicKey: string }>('/push/public-key');
+  },
+  pushSubscribe(
+    token: string,
+    body: { endpoint: string; keys: { p256dh: string; auth: string }; userAgent?: string },
+  ) {
+    return http('/push/subscribe', { method: 'POST', token, body: JSON.stringify(body) });
+  },
   aqi(params?: { lat?: number; lng?: number }) {
     const search = new URLSearchParams();
     if (params?.lat != null) search.set('lat', String(params.lat));
@@ -104,6 +113,10 @@ export const apiClient = {
   },
   markNotificationRead(token: string, id: string) {
     return http(`/notifications/${encodeURIComponent(id)}/read`, { method: 'PATCH', token });
+  },
+  syncVideos(token: string | null, body: { category?: string; max?: number }) {
+    // no auth for now; keep signature in case you later secure it
+    return http('/videos/sync', { method: 'POST', body: JSON.stringify(body) });
   },
   publicUser(id: string) {
     return http<any>(`/users/${encodeURIComponent(id)}`);

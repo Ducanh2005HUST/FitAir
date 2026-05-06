@@ -13,10 +13,13 @@ import { EnvironmentModule } from '../environment/environment.module';
 import { HealthModule } from '../health/health.module';
 import { GooglePlacesModule } from '../google-places/google-places.module';
 import { MailModule } from '../mail/mail.module';
+import { PushModule } from '../push/push.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -30,6 +33,7 @@ import { MailModule } from '../mail/mail.module';
     HealthModule,
     GooglePlacesModule,
     MailModule,
+    PushModule,
   ],
 })
 export class AppModule {}

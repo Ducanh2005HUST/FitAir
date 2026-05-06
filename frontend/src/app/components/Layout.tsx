@@ -1,14 +1,20 @@
-import { Outlet } from 'react-router';
+import { Outlet, useSearchParams } from 'react-router';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
 import { Bell } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NotificationDialog } from './NotificationDialog';
 import { useAuth } from '../auth/AuthContext';
 
 export function Layout() {
   const { token } = useAuth();
   const [showNotification, setShowNotification] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialNotificationId = searchParams.get('notificationId');
+
+  useEffect(() => {
+    if (initialNotificationId) setShowNotification(true);
+  }, [initialNotificationId]);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -50,7 +56,18 @@ export function Layout() {
         <BottomNav />
       </div>
 
-      <NotificationDialog open={showNotification} onClose={() => setShowNotification(false)} />
+      <NotificationDialog
+        open={showNotification}
+        initialNotificationId={initialNotificationId}
+        onClose={() => {
+          setShowNotification(false);
+          if (initialNotificationId) {
+            const next = new URLSearchParams(searchParams);
+            next.delete('notificationId');
+            setSearchParams(next, { replace: true });
+          }
+        }}
+      />
     </div>
   );
 }

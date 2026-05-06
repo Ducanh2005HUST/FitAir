@@ -31,6 +31,7 @@ model User {
   comments     PostComment[]
   postLikes    PostLike[]
   notifications Notification[]
+  pushSubscriptions PushSubscription[]
   passwordResets PasswordReset[]
 }
 
@@ -108,6 +109,7 @@ model Schedule {
   updatedAt DateTime @updatedAt
 
   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reminders ScheduleReminder[]
   @@index([userId])
 }
 
@@ -186,9 +188,38 @@ model Notification {
   type      String
   title     String
   message   String
+  data      Json?
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 
   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([userId])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint])
+  @@index([userId])
+}
+
+model ScheduleReminder {
+  id           String   @id @default(cuid())
+  scheduleId   String
+  scheduledAt  DateTime
+  notificationId String?
+  createdAt    DateTime @default(now())
+
+  schedule     Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@unique([scheduleId, scheduledAt])
+  @@index([scheduledAt])
 }

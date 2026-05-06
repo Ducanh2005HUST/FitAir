@@ -45,6 +45,23 @@ Backend có thể lấy danh sách gym/công viên quanh vị trí người dùn
   - Hoặc dùng YouTube Data API: điền `YOUTUBE_API_KEY` trong `backend/.env`
 - Frontend dùng nút `最新を取得 / Load latest` để gọi `POST /videos/sync` và cập nhật DB
 
+## Push notifications (Web Push)
+
+Để có thông báo lên notification center/lock screen (trên trình duyệt hỗ trợ), dùng Web Push + VAPID:
+
+```bash
+cd /Users/mac/Downloads/FitAir
+npx web-push generate-vapid-keys
+```
+
+Điền vào `backend/.env`:
+
+- `VAPID_PUBLIC_KEY=...`
+- `VAPID_PRIVATE_KEY=...`
+- `VAPID_SUBJECT=mailto:...`
+
+Trong app, mở chuông thông báo và bấm `通知を有効化 / Enable push` để đăng ký thiết bị.
+
 ## Chạy backend (NestJS)
 
 ```bash

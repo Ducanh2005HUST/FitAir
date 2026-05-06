@@ -38,5 +38,20 @@ export class MailService {
     });
     return { ok: true as const };
   }
-}
 
+  async sendWorkoutReminder(input: { to: string; title: string; message: string }) {
+    const from = this.config.get<string>('SMTP_FROM') ?? '';
+    const tx = this.transporter();
+    if (!from || !tx) {
+      return { ok: false as const, message: 'Email is not configured' };
+    }
+
+    await tx.sendMail({
+      from,
+      to: input.to,
+      subject: `FitAir - Workout reminder: ${input.title}`,
+      text: input.message,
+    });
+    return { ok: true as const };
+  }
+}
