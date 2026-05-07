@@ -19,6 +19,16 @@ import { Chat } from "./screens/Chat";
 import { NotFound } from "./screens/NotFound";
 import { ForgotPassword } from "./screens/ForgotPassword";
 import { ResetPassword } from "./screens/ResetPassword";
+import { useEffect } from "react";
+import { useNavigate } from "react-router";
+
+function MapRedirect() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    navigate("/search", { replace: true });
+  }, [navigate]);
+  return null;
+}
 
 export const router = createBrowserRouter([
   {
@@ -30,8 +40,9 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, Component: Dashboard },
-      { path: "search", Component: Search },
-      { path: "map", Component: MapScreen },
+      // Search + Map are merged into one screen to avoid duplicated functionality
+      { path: "search", Component: MapScreen },
+      { path: "map", Component: MapRedirect },
       { path: "location/:id", Component: LocationDetail },
       { path: "review/:id", Component: Review },
       { path: "indoor", Component: IndoorTraining },

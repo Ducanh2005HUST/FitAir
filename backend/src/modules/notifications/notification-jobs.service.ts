@@ -73,7 +73,7 @@ export class NotificationJobsService {
         ? `Tới giờ tập: ${s.title}. AQI ${aqi.aqi} (${aqi.category}) → nên tập trong nhà.`
         : `Tới giờ tập: ${s.title}. Thời tiết: ${weather.description ?? ''} ${weather.tempC.toFixed(1)}°C.`;
 
-      const actionPath = recommendIndoor ? '/indoor' : '/map';
+      const actionPath = recommendIndoor ? '/indoor' : '/search';
 
       const notification = await this.prisma.notification.create({
         data: {
