@@ -1,4 +1,4 @@
-import { Home, Users, User, Dumbbell, Calendar, LogOut, Search, Map } from 'lucide-react';
+import { Home, Users, User, Dumbbell, Calendar, LogOut, Search } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
 
@@ -10,8 +10,7 @@ export function Sidebar() {
 
   const navItems = [
     { path: '/', icon: Home, label: 'ダッシュボード', labelVi: 'Trang chủ' },
-    { path: '/search', icon: Search, label: '検索', labelVi: 'Tìm kiếm' },
-    { path: '/map', icon: Map, label: 'マップ', labelVi: 'Bản đồ' },
+    { path: '/search', icon: Search, label: '検索・マップ', labelVi: 'Tìm kiếm & Bản đồ' },
     { path: '/indoor', icon: Dumbbell, label: '室内トレーニング', labelVi: 'Tập trong nhà' },
     { path: '/schedule', icon: Calendar, label: 'スケジュール', labelVi: 'Lịch trình' },
     { path: '/community', icon: Users, label: 'コミュニティ', labelVi: 'Cộng đồng' },
