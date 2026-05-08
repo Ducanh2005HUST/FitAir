@@ -7,8 +7,8 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 export class CommunityService {
   constructor(private readonly prisma: PrismaService) {}
 
-  list(keyword?: string) {
-    return this.prisma.communityPost.findMany({
+  async list(keyword?: string, viewerUserId?: string) {
+    const posts = await this.prisma.communityPost.findMany({
       where: keyword
         ? {
             OR: [
@@ -22,6 +22,28 @@ export class CommunityService {
       take: 100,
       include: { user: { select: { id: true, name: true, avatarUrl: true } }, _count: { select: { participants: true, likes: true, comments: true } } },
     });
+
+    if (!viewerUserId) return posts as any;
+
+    const ids = posts.map((p) => p.id);
+    const [joins, likes] = await Promise.all([
+      this.prisma.postParticipant.findMany({
+        where: { userId: viewerUserId, postId: { in: ids } },
+        select: { postId: true },
+      }),
+      this.prisma.postLike.findMany({
+        where: { userId: viewerUserId, postId: { in: ids } },
+        select: { postId: true },
+      }),
+    ]);
+    const joinedSet = new Set(joins.map((x) => x.postId));
+    const likedSet = new Set(likes.map((x) => x.postId));
+
+    return posts.map((p) => ({
+      ...p,
+      viewerJoined: joinedSet.has(p.id),
+      viewerLiked: likedSet.has(p.id),
+    })) as any;
   }
 
   create(userId: string, dto: CreatePostDto) {

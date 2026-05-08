@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { clearToken, getToken, setToken } from './storage';
-import { http } from '../api/http';
+import { HttpError, http } from '../api/http';
 
 export type Me = {
   id: string;
@@ -35,8 +35,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setMe(null);
       return;
     }
-    const out = await http<Me>('/users/me', { token: t });
-    setMe(out);
+    try {
+      const out = await http<Me>('/users/me', { token: t });
+      setMe(out);
+    } catch (err) {
+      if (err instanceof HttpError && (err.status === 401 || err.status === 403)) {
+        clearToken();
+        setTokenState(null);
+        setMe(null);
+      }
+      throw err;
+    }
   }, [token]);
 
   useEffect(() => {
@@ -48,9 +57,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     refreshMe()
       .catch(() => {
-        clearToken();
-        setTokenState(null);
-        setMe(null);
+        // Don’t auto-logout on transient network errors.
+        // Only clear token when it is actually invalid/unauthorized.
+        // If backend is temporarily down, keep token so reload doesn't force re-login.
+        // eslint-disable-next-line no-console
+        // console.warn('refreshMe failed', err);
       })
       .finally(() => setIsBootstrapping(false));
   }, [refreshMe]);
@@ -94,4 +105,3 @@ export function useAuth() {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 }
-

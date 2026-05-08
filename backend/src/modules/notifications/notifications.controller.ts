@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Post, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, Patch, Param, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { NotificationsService } from './notifications.service';
@@ -20,6 +20,11 @@ export class NotificationsController {
   @Patch(':id/read')
   markRead(@CurrentUser() user: { userId: string }, @Param('id') id: string) {
     return this.notifications.markRead(user.userId, id);
+  }
+
+  @Delete()
+  clearAll(@CurrentUser() user: { userId: string }) {
+    return this.notifications.clearAll(user.userId);
   }
 
   // Dev helper: trigger reminder job manually.

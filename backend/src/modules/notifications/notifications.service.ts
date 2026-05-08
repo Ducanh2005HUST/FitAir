@@ -19,5 +19,9 @@ export class NotificationsService {
     if (n.userId !== userId) throw new ForbiddenException();
     return this.prisma.notification.update({ where: { id }, data: { isRead: true } });
   }
-}
 
+  async clearAll(userId: string) {
+    const res = await this.prisma.notification.deleteMany({ where: { userId } });
+    return { ok: true, deleted: res.count };
+  }
+}

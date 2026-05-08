@@ -53,9 +53,9 @@ function NotificationDialogInner({ onClose, initialNotificationId }: { onClose: 
   const selected = useMemo(() => items.find((x) => x.id === selectedId) ?? null, [items, selectedId]);
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 z-[3000] flex items-center justify-center p-4" onClick={onClose}>
       <div 
-        className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl"
+        className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl max-h-[85vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
@@ -65,7 +65,7 @@ function NotificationDialogInner({ onClose, initialNotificationId }: { onClose: 
           </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto pr-1" style={{ maxHeight: 'calc(85vh - 90px)' }}>
           {!token ? (
             <div className="rounded-xl border border-gray-200 p-4 text-sm text-gray-700">
               ログインしてください / Vui lòng đăng nhập
@@ -104,30 +104,42 @@ function NotificationDialogInner({ onClose, initialNotificationId }: { onClose: 
             <div className="text-sm text-gray-600">No notifications</div>
           ) : (
             <>
-              <button
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm hover:bg-gray-50 disabled:opacity-60"
-                disabled={isEnablingPush}
-                onClick={async () => {
-                  if (!token) return;
-                  setIsEnablingPush(true);
-                  try {
-                    const { publicKey } = await apiClient.pushPublicKey();
-                    const sub = await ensurePushSubscription(publicKey);
-                    if (!sub) return;
-                    const json = sub.toJSON();
-                    if (!json?.endpoint || !json?.keys?.p256dh || !json?.keys?.auth) return;
-                    await apiClient.pushSubscribe(token, {
-                      endpoint: json.endpoint,
-                      keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
-                      userAgent: navigator.userAgent,
-                    });
-                  } finally {
-                    setIsEnablingPush(false);
-                  }
-                }}
-              >
-                {isEnablingPush ? 'Enabling…' : '通知を有効化 / Enable push'}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm hover:bg-gray-50 disabled:opacity-60"
+                  disabled={isEnablingPush}
+                  onClick={async () => {
+                    if (!token) return;
+                    setIsEnablingPush(true);
+                    try {
+                      const { publicKey } = await apiClient.pushPublicKey();
+                      const sub = await ensurePushSubscription(publicKey);
+                      if (!sub) return;
+                      const json = sub.toJSON();
+                      if (!json?.endpoint || !json?.keys?.p256dh || !json?.keys?.auth) return;
+                      await apiClient.pushSubscribe(token, {
+                        endpoint: json.endpoint,
+                        keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
+                        userAgent: navigator.userAgent,
+                      });
+                    } finally {
+                      setIsEnablingPush(false);
+                    }
+                  }}
+                >
+                  {isEnablingPush ? 'Enabling…' : '通知を有効化 / Enable push'}
+                </button>
+                <button
+                  className="rounded-xl border border-red-200 bg-white px-4 py-3 text-sm text-red-600 hover:bg-red-50"
+                  onClick={async () => {
+                    if (!token) return;
+                    await apiClient.clearNotifications(token);
+                    setItems([]);
+                  }}
+                >
+                  すべて削除 / Xoá tất cả
+                </button>
+              </div>
               {items.map((n) => (
                 <button
                   key={n.id}

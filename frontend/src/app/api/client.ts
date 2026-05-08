@@ -67,9 +67,9 @@ export const apiClient = {
       body: JSON.stringify(body),
     });
   },
-  posts(keyword?: string) {
+  posts(keyword?: string, token?: string | null) {
     const q = keyword ? `?keyword=${encodeURIComponent(keyword)}` : '';
-    return http<CommunityPostDto[]>(`/posts${q}`);
+    return http<CommunityPostDto[]>(`/posts${q}`, token ? { token } : undefined);
   },
   createPost(token: string, body: { content: string; sport?: string; location?: string; time?: string; maxParticipants?: number }) {
     return http('/posts', { method: 'POST', token, body: JSON.stringify(body) });
@@ -113,6 +113,9 @@ export const apiClient = {
   },
   markNotificationRead(token: string, id: string) {
     return http(`/notifications/${encodeURIComponent(id)}/read`, { method: 'PATCH', token });
+  },
+  clearNotifications(token: string) {
+    return http<{ ok: boolean; deleted: number }>('/notifications', { method: 'DELETE', token });
   },
   syncVideos(token: string | null, body: { category?: string; max?: number }) {
     // no auth for now; keep signature in case you later secure it

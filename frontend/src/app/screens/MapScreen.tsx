@@ -31,8 +31,27 @@ export function MapScreen() {
   const [showSidebar, setShowSidebar] = useState(true);
   const { coords } = useUserLocation({ watch: true });
   const cacheRef = useRef(new Map<string, SpotDto[]>());
+  const sortMenuRef = useRef<HTMLDivElement | null>(null);
   const [query, setQuery] = useState('');
-  const [sort, setSort] = useState<'distance' | 'rating'>('distance');
+  const [sort, setSort] = useState<'distance' | 'rating' | 'aqi' | 'name'>('distance');
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [radiusKm, setRadiusKm] = useState(10);
+  const [sport, setSport] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<{ indoor: boolean; outdoor: boolean }>({ indoor: false, outdoor: false });
+  const [minRating, setMinRating] = useState(0);
+
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (!showSortMenu) return;
+      const el = sortMenuRef.current;
+      if (!el) return;
+      if (e.target instanceof Node && el.contains(e.target)) return;
+      setShowSortMenu(false);
+    };
+    window.addEventListener('mousedown', onDown);
+    return () => window.removeEventListener('mousedown', onDown);
+  }, [showSortMenu]);
 
   const coordKey = useMemo(() => {
     if (!coords) return 'hanoi-default';
@@ -49,10 +68,18 @@ export function MapScreen() {
 
         const aqiOut = await apiClient.aqi({ lat: coords?.lat, lng: coords?.lng });
         const s = await apiClient.spots({
-          sort: coords ? sort : 'rating',
+          sort: coords ? (sort === 'aqi' || sort === 'name' ? 'distance' : sort) : 'rating',
           lat: coords?.lat,
           lng: coords?.lng,
-          radiusKm: 10,
+          radiusKm,
+          district: selectedDistrict !== 'all' ? selectedDistrict : undefined,
+          sport: sport !== 'all' ? sport : undefined,
+          type:
+            typeFilter.indoor && !typeFilter.outdoor
+              ? 'indoor'
+              : typeFilter.outdoor && !typeFilter.indoor
+                ? 'outdoor'
+                : undefined,
         });
         if (cancelled) return;
         setAqi(aqiOut.aqi);
@@ -71,11 +98,17 @@ export function MapScreen() {
     return () => {
       cancelled = true;
     };
-  }, [coordKey, coords?.lat, coords?.lng, sort]);
+  }, [coordKey, coords?.lat, coords?.lng, sort, radiusKm, selectedDistrict, sport, typeFilter.indoor, typeFilter.outdoor]);
 
   const districts = useMemo(() => {
     const set = new Set<string>();
     for (const s of spots) if (s.district) set.add(s.district);
+    return ['all', ...Array.from(set).sort((a, b) => a.localeCompare(b))];
+  }, [spots]);
+
+  const sports = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of spots) for (const sp of s.sports ?? []) set.add(sp);
     return ['all', ...Array.from(set).sort((a, b) => a.localeCompare(b))];
   }, [spots]);
 
@@ -88,13 +121,24 @@ export function MapScreen() {
         return hay.includes(q);
       });
     }
+    if (sport !== 'all') out = out.filter((s) => (s.sports ?? []).includes(sport));
+    if (typeFilter.indoor !== typeFilter.outdoor) {
+      out = out.filter((s) => (typeFilter.indoor ? s.type === 'indoor' : s.type === 'outdoor'));
+    }
+    if (minRating > 0) out = out.filter((s) => (s.avgRating ?? 0) >= minRating);
+
     if (sort === 'rating') {
       out = [...out].sort((a, b) => (b.avgRating ?? 0) - (a.avgRating ?? 0));
+    } else if (sort === 'name') {
+      out = [...out].sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sort === 'aqi') {
+      // We don't have per-spot AQI yet; keep stable
+      out = [...out];
     } else if (coords) {
       out = [...out].sort((a, b) => (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9));
     }
     return out;
-  }, [spots, selectedDistrict, query, sort, coords]);
+  }, [spots, selectedDistrict, query, sort, coords, sport, typeFilter.indoor, typeFilter.outdoor, minRating]);
 
   const selectedSpot = useMemo(
     () => (selectedSpotId ? filtered.find((s) => s.id === selectedSpotId) : null),
@@ -127,6 +171,115 @@ export function MapScreen() {
 
   return (
     <div className="h-[calc(100vh-8rem)] md:h-[calc(100vh-5rem)] bg-gray-50 flex flex-col md:flex-row overflow-hidden relative">
+      {showFilterModal ? (
+        <div className="fixed inset-0 z-[3000] bg-black/50 flex items-center justify-center p-4" onClick={() => setShowFilterModal(false)}>
+          <div className="w-full max-w-md rounded-3xl bg-white overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+                  <SlidersHorizontal className="w-5 h-5 text-white" />
+                </div>
+                <div className="text-xl font-semibold">フィルター / Bộ lọc</div>
+              </div>
+              <button className="p-2 rounded-full hover:bg-gray-100" onClick={() => setShowFilterModal(false)}>
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+
+            <div className="px-6 py-6 space-y-6">
+              <div>
+                <div className="text-sm font-semibold mb-2">地区 / Khu vực</div>
+                <select
+                  value={selectedDistrict}
+                  onChange={(e) => setSelectedDistrict(e.target.value)}
+                  className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm"
+                >
+                  {districts.map((d) => (
+                    <option key={d} value={d}>
+                      {d === 'all' ? 'すべての地区 / Tất cả quận' : d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <div className="text-sm font-semibold mb-2">スポーツ / Môn thể thao</div>
+                <select value={sport} onChange={(e) => setSport(e.target.value)} className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm">
+                  {sports.map((s) => (
+                    <option key={s} value={s}>
+                      {s === 'all' ? 'すべて / Tất cả' : s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm font-semibold">距離 / Bán kính (từ vị trí bạn)</div>
+                  <div className="text-blue-600 font-semibold">{radiusKm} km</div>
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={30}
+                  value={radiusKm}
+                  onChange={(e) => setRadiusKm(Number(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <div className="text-sm font-semibold mb-2">場所 / Loại địa điểm</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-4">
+                    <input type="checkbox" checked={typeFilter.indoor} onChange={(e) => setTypeFilter((p) => ({ ...p, indoor: e.target.checked }))} />
+                    <span className="font-semibold">室内 / Trong nhà</span>
+                  </label>
+                  <label className="flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-4">
+                    <input type="checkbox" checked={typeFilter.outdoor} onChange={(e) => setTypeFilter((p) => ({ ...p, outdoor: e.target.checked }))} />
+                    <span className="font-semibold">屋外 / Ngoài trời</span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-sm font-semibold mb-2">評価 / Đánh giá tối thiểu</div>
+                <select
+                  value={minRating}
+                  onChange={(e) => setMinRating(Number(e.target.value))}
+                  className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm"
+                >
+                  <option value={0}>すべて / Tất cả</option>
+                  <option value={3}>3.0+</option>
+                  <option value={4}>4.0+</option>
+                  <option value={4.5}>4.5+</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="px-6 py-5 border-t border-gray-100 flex gap-4">
+              <button
+                className="flex-1 rounded-2xl border border-gray-200 bg-white py-4 font-semibold hover:bg-gray-50"
+                onClick={() => {
+                  setSelectedDistrict('all');
+                  setSport('all');
+                  setRadiusKm(10);
+                  setTypeFilter({ indoor: false, outdoor: false });
+                  setMinRating(0);
+                }}
+              >
+                Đặt lại
+              </button>
+              <button
+                className="flex-[1.4] rounded-2xl bg-blue-600 text-white py-4 font-semibold hover:bg-blue-700"
+                onClick={() => setShowFilterModal(false)}
+              >
+                Hiển thị {filtered.length} kết quả
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div
         className={`
           hidden md:flex md:flex-col
@@ -201,21 +354,55 @@ export function MapScreen() {
           </div>
 
           <div className="mt-4 flex items-center gap-3">
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as any)}
-              className="flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm"
-            >
-              <option value="distance">並び替え: 距離 / Khoảng cách</option>
-              <option value="rating">並び替え: 評価 / Đánh giá</option>
-            </select>
+            <div className="relative flex-1" ref={sortMenuRef}>
+              <button
+                type="button"
+                onClick={() => setShowSortMenu((v) => !v)}
+                className="w-full flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm hover:bg-gray-50"
+              >
+                <span>
+                  {sort === 'distance'
+                    ? '並び替え: 距離 / Khoảng cách'
+                    : sort === 'rating'
+                      ? '並び替え: 評価 / Đánh giá'
+                      : sort === 'aqi'
+                        ? '並び替え: AQI / AQI'
+                        : '並び替え: 名前 / Tên A-Z'}
+                </span>
+                <span className="text-gray-400">▾</span>
+              </button>
+              {showSortMenu ? (
+                <div className="absolute top-[54px] left-0 right-0 z-30 rounded-2xl border border-gray-200 bg-white shadow-xl overflow-hidden">
+                  {(
+                    [
+                      { id: 'distance', label: '並び替え: 距離 / Khoảng cách' },
+                      { id: 'rating', label: '並び替え: 評価 / Đánh giá' },
+                      { id: 'aqi', label: '並び替え: AQI / AQI' },
+                      { id: 'name', label: '並び替え: 名前 / Tên A-Z' },
+                    ] as const
+                  ).map((it) => (
+                    <button
+                      key={it.id}
+                      type="button"
+                      className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 ${sort === it.id ? 'bg-blue-500 text-white' : ''}`}
+                      onClick={() => {
+                        setSort(it.id as any);
+                        setShowSortMenu(false);
+                      }}
+                    >
+                      {sort === it.id ? '✓ ' : ''}
+                      {it.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
             <button
               type="button"
               className="w-12 h-12 rounded-2xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50"
               aria-label="Filters"
               onClick={() => {
-                // district filter for now (simple)
-                setSelectedDistrict(selectedDistrict === 'all' ? (districts[1] ?? 'all') : 'all');
+                setShowFilterModal(true);
               }}
             >
               <SlidersHorizontal className="w-5 h-5 text-blue-600" />
