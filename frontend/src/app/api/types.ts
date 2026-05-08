@@ -26,6 +26,8 @@ export type CommunityPostDto = {
   createdAt: string;
   user: { id: string; name: string; avatarUrl?: string | null };
   _count?: { participants: number; likes: number; comments: number };
+  viewerJoined?: boolean;
+  viewerLiked?: boolean;
 };
 
 export type PostCommentDto = {

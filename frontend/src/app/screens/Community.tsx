@@ -6,6 +6,28 @@ import { apiClient } from '../api/client';
 import type { CommunityPostDto, PostCommentDto, PostParticipantDto, SpotDto } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 
+function Avatar(props: { name: string; url?: string | null; size?: number; className?: string }) {
+  const size = props.size ?? 40;
+  const initials = props.name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((x) => x[0]?.toUpperCase())
+    .join('');
+  return (
+    <div
+      className={`rounded-full bg-blue-100 text-blue-700 flex items-center justify-center overflow-hidden ${props.className ?? ''}`}
+      style={{ width: size, height: size }}
+    >
+      {props.url ? (
+        <img src={props.url} alt="avatar" className="h-full w-full object-cover" />
+      ) : (
+        <span className="text-sm font-bold">{initials || 'U'}</span>
+      )}
+    </div>
+  );
+}
+
 export function Community() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -61,8 +83,16 @@ export function Community() {
   const loadPosts = async (kw?: string) => {
     setIsLoading(true);
     try {
-      const out = await apiClient.posts(kw?.trim() ? kw.trim() : undefined);
+      const out = await apiClient.posts(kw?.trim() ? kw.trim() : undefined, token);
       setPosts(out);
+      const nextJoined: Record<string, boolean> = {};
+      const nextLiked: Record<string, boolean> = {};
+      for (const p of out) {
+        if (typeof p.viewerJoined === 'boolean') nextJoined[p.id] = p.viewerJoined;
+        if (typeof p.viewerLiked === 'boolean') nextLiked[p.id] = p.viewerLiked;
+      }
+      setJoined((prev) => ({ ...prev, ...nextJoined }));
+      setLiked((prev) => ({ ...prev, ...nextLiked }));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to load posts');
     } finally {
@@ -167,8 +197,13 @@ export function Community() {
                   className="text-left"
                   onClick={() => openProfile(p.user.id)}
                 >
-                  <div className="font-medium text-gray-900">{p.user.name}</div>
-                  <div className="text-xs text-gray-500">{new Date(p.createdAt).toLocaleString()}</div>
+                  <div className="flex items-center gap-3">
+                    <Avatar name={p.user.name} url={p.user.avatarUrl} size={40} />
+                    <div>
+                      <div className="font-medium text-gray-900">{p.user.name}</div>
+                      <div className="text-xs text-gray-500">{new Date(p.createdAt).toLocaleString()}</div>
+                    </div>
+                  </div>
                 </button>
                 <div className="text-xs text-gray-500">
                   {p.sport ? `#${p.sport}` : null}
@@ -262,12 +297,17 @@ export function Community() {
               {expandedComments[p.id] ? (
                 <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
                   <div className="space-y-3">
-                    {(comments[p.id] ?? []).map((c) => (
-                      <div key={c.id} className="rounded-lg bg-white p-3 border border-gray-200">
-                        <div className="text-xs text-gray-500">{c.user.name}</div>
-                        <div className="text-sm text-gray-800">{c.content}</div>
+                  {(comments[p.id] ?? []).map((c) => (
+                    <div key={c.id} className="rounded-lg bg-white p-3 border border-gray-200">
+                      <div className="flex items-start gap-2">
+                        <Avatar name={c.user.name} url={c.user.avatarUrl} size={32} className="mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs text-gray-500">{c.user.name}</div>
+                          <div className="text-sm text-gray-800">{c.content}</div>
+                        </div>
                       </div>
-                    ))}
+                    </div>
+                  ))}
                   </div>
                   <div className="mt-3 flex gap-2">
                     <input
@@ -402,8 +442,13 @@ export function Community() {
             <div className="mt-4 space-y-3">
               {participants.map((pp) => (
                 <button key={pp.id} className="w-full text-left rounded-xl border border-gray-200 p-3 hover:bg-gray-50" onClick={() => openProfile(pp.user.id)}>
-                  <div className="font-medium">{pp.user.name}</div>
-                  <div className="text-xs text-gray-500">{new Date(pp.joinedAt).toLocaleString()}</div>
+                  <div className="flex items-center gap-3">
+                    <Avatar name={pp.user.name} url={pp.user.avatarUrl} size={40} />
+                    <div>
+                      <div className="font-medium">{pp.user.name}</div>
+                      <div className="text-xs text-gray-500">{new Date(pp.joinedAt).toLocaleString()}</div>
+                    </div>
+                  </div>
                 </button>
               ))}
               {participants.length === 0 ? <div className="text-sm text-gray-600">No participants</div> : null}
@@ -422,8 +467,13 @@ export function Community() {
               </button>
             </div>
             <div className="mt-4 space-y-2">
-              <div className="text-xl font-semibold">{publicProfile?.name ?? '—'}</div>
-              <div className="text-sm text-gray-600">{publicProfile?.location ?? ''}</div>
+              <div className="flex items-center gap-3">
+                <Avatar name={publicProfile?.name ?? 'User'} url={publicProfile?.avatarUrl} size={56} />
+                <div className="min-w-0">
+                  <div className="text-xl font-semibold truncate">{publicProfile?.name ?? '—'}</div>
+                  <div className="text-sm text-gray-600 truncate">{publicProfile?.location ?? ''}</div>
+                </div>
+              </div>
               <div className="text-sm text-gray-700">{publicProfile?.bio ?? ''}</div>
               {publicProfile?.id === me?.id ? (
                 <div className="pt-3">
@@ -439,4 +489,3 @@ export function Community() {
     </div>
   );
 }
-

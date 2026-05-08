@@ -6,6 +6,17 @@ export function getApiBaseUrl() {
   return baseUrl ?? 'http://localhost:4000';
 }
 
+export class HttpError extends Error {
+  status: number;
+  body: unknown;
+  constructor(message: string, status: number, body: unknown) {
+    super(message);
+    this.name = 'HttpError';
+    this.status = status;
+    this.body = body;
+  }
+}
+
 export async function http<T>(
   path: string,
   init?: RequestInit & { token?: string },
@@ -23,9 +34,8 @@ export async function http<T>(
       (data as HttpErrorBody | null)?.message ??
       (typeof data === 'string' ? data : null) ??
       `HTTP ${res.status}`;
-    throw new Error(msg);
+    throw new HttpError(msg, res.status, data);
   }
 
   return data as T;
 }
-

@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { CommunityService } from './community.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -10,8 +11,9 @@ export class CommunityController {
   constructor(private readonly community: CommunityService) {}
 
   @Get()
-  list(@Query('keyword') keyword?: string) {
-    return this.community.list(keyword);
+  @UseGuards(OptionalJwtAuthGuard)
+  list(@CurrentUser() user: { userId: string } | null, @Query('keyword') keyword?: string) {
+    return this.community.list(keyword, user?.userId);
   }
 
   @UseGuards(JwtAuthGuard)
