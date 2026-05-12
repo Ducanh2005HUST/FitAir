@@ -10,15 +10,30 @@ interface NotificationDialogProps {
   open: boolean;
   onClose: () => void;
   initialNotificationId?: string | null;
+  onUnreadCountChange?: (count: number) => void;
 }
 
-export function NotificationDialog({ open, onClose, initialNotificationId }: NotificationDialogProps) {
+export function NotificationDialog({ open, onClose, initialNotificationId, onUnreadCountChange }: NotificationDialogProps) {
   if (!open) return null;
 
-  return <NotificationDialogInner onClose={onClose} initialNotificationId={initialNotificationId} />;
+  return (
+    <NotificationDialogInner
+      onClose={onClose}
+      initialNotificationId={initialNotificationId}
+      onUnreadCountChange={onUnreadCountChange}
+    />
+  );
 }
 
-function NotificationDialogInner({ onClose, initialNotificationId }: { onClose: () => void; initialNotificationId?: string | null }) {
+function NotificationDialogInner({
+  onClose,
+  initialNotificationId,
+  onUnreadCountChange,
+}: {
+  onClose: () => void;
+  initialNotificationId?: string | null;
+  onUnreadCountChange?: (count: number) => void;
+}) {
   const { token } = useAuth();
   const [items, setItems] = useState<NotificationDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -51,6 +66,10 @@ function NotificationDialogInner({ onClose, initialNotificationId }: { onClose: 
 
   const unreadCount = useMemo(() => items.filter((i) => !i.isRead).length, [items]);
   const selected = useMemo(() => items.find((x) => x.id === selectedId) ?? null, [items, selectedId]);
+
+  useEffect(() => {
+    onUnreadCountChange?.(unreadCount);
+  }, [onUnreadCountChange, unreadCount]);
 
   return (
     <div className="fixed inset-0 bg-black/50 z-[3000] flex items-center justify-center p-4" onClick={onClose}>
