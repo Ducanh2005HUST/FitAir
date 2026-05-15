@@ -5,13 +5,5 @@ coverage
 .turbo
 .DS_Store
 
-.env
-.env.*
-!.env.example
-
-*.log
-
-node_modules
-*.env
 
 
