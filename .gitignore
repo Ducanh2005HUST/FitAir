@@ -5,5 +5,7 @@ coverage
 .turbo
 .DS_Store
 
+*.env1
+node_modules/
 
 
