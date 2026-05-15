@@ -43,14 +43,14 @@ export function ChangePassword() {
     // Validation
     if (formData.newPassword !== formData.confirmPassword) {
       toast.error('パスワードが一致しません', {
-        description: 'Mật khẩu xác nhận không khớp',
+        description: '確認用パスワードが一致しません',
       });
       return;
     }
 
     if (strengthCount < 4) {
       toast.error('パスワードが弱すぎます', {
-        description: 'Mật khẩu chưa đủ mạnh',
+        description: 'より強いパスワードを設定してください',
       });
       return;
     }
@@ -66,7 +66,7 @@ export function ChangePassword() {
         }),
       });
       toast.success('パスワードを変更しました', {
-        description: 'Mật khẩu đã được thay đổi thành công',
+        description: 'パスワードを変更しました',
       });
       logout();
       navigate('/login');
@@ -89,7 +89,7 @@ export function ChangePassword() {
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
             パスワード変更
           </h1>
-          <p className="text-sm text-gray-500">Đổi mật khẩu</p>
+          <p className="text-sm text-gray-500">パスワードを更新します</p>
         </div>
       </div>
 
@@ -103,7 +103,7 @@ export function ChangePassword() {
                 <Lock className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm">
                   <p className="font-medium text-blue-900 mb-1">
-                    セキュリティのヒント / Lưu ý bảo mật
+                    セキュリティのヒント
                   </p>
                   <ul className="text-blue-700 space-y-1 text-xs">
                     <li>• 8文字以上のパスワードを使用してください</li>
@@ -118,7 +118,7 @@ export function ChangePassword() {
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                 <Lock className="w-4 h-4 text-gray-400" />
-                <span>現在のパスワード / Mật khẩu hiện tại</span>
+                <span>現在のパスワード</span>
               </label>
               <div className="relative">
                 <Input
@@ -154,7 +154,7 @@ export function ChangePassword() {
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                 <Lock className="w-4 h-4 text-gray-400" />
-                <span>新しいパスワード / Mật khẩu mới</span>
+                <span>新しいパスワード</span>
               </label>
               <div className="relative">
                 <Input
@@ -287,7 +287,7 @@ export function ChangePassword() {
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                 <Lock className="w-4 h-4 text-gray-400" />
-                <span>パスワード確認 / Xác nhận mật khẩu</span>
+                <span>パスワード確認</span>
               </label>
               <div className="relative">
                 <Input
@@ -328,14 +328,14 @@ export function ChangePassword() {
               onClick={() => navigate('/profile')}
               className="flex-1 rounded-[16px]"
             >
-              キャンセル / Hủy
+              キャンセル
             </Button>
             <Button
               type="submit"
               className="flex-1 rounded-[16px] bg-blue-500 hover:bg-blue-600"
             >
               <Lock className="w-4 h-4" />
-              変更を保存 / Lưu thay đổi
+              変更を保存
             </Button>
           </div>
         </div>

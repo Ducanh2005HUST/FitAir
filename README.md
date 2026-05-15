@@ -1,102 +1,102 @@
 # FitAir
 
-Monorepo gồm:
+モノレポ構成:
 
-- `backend/`: NestJS (TypeScript) + Prisma (Postgres/Neon)
-- `frontend/`: Vite + React (UI bundle “Health & Fitness Platform UI”)
-- `frontend-next-old/`: frontend Next.js cũ (không dùng nữa)
+- `backend/`: NestJS (TypeScript) + Prisma（Postgres / Neon）
+- `frontend/`: Vite + React（UI bundle “Health & Fitness Platform UI”）
+- `frontend-next-old/`: 旧 Next.js フロントエンド（現在は未使用）
 
-## Yêu cầu
+## 必要要件
 
 - Node.js >= 20
-- Neon Postgres (hoặc Postgres thường)
+- Neon Postgres（または通常の Postgres）
 
-## Cài dependencies
+## 依存関係のインストール
 
 ```bash
 cd /Users/mac/Downloads/FitAir
 npm install
 ```
 
-## Thiết lập môi trường (không commit `.env`)
+## 環境変数の設定（`.env` はコミットしない）
 
-Backend env:
+Backend:
 
-- Tạo file `backend/.env` dựa theo `backend/.env.example`
-- Điền `DATABASE_URL` (Neon/PG)
+- `backend/.env.example` を元に `backend/.env` を作成
+- `DATABASE_URL`（Neon / PG）を設定
 
-Frontend env:
+Frontend:
 
-- Tạo file `frontend/.env.local` dựa theo `frontend/.env.example`
-- `VITE_API_BASE_URL` mặc định: `http://127.0.0.1:4000`
+- `frontend/.env.example` を元に `frontend/.env.local` を作成
+- `VITE_API_BASE_URL` のデフォルト: `http://127.0.0.1:4000`
 
 ## SerpApi (Google Maps Local Results)
 
-Backend có thể lấy danh sách gym/công viên quanh vị trí người dùng thông qua SerpApi (ưu tiên), và tự lưu (upsert) vào DB để các màn hình Spot/Review dùng chung.
+Backend は SerpApi（優先）を使って現在地周辺のジム/公園を取得し、DB に upsert します（Spot/Review などで共通利用）。
 
-- Điền `SERPAPI_API_KEY` trong `backend/.env`
-- Restart backend
-- Frontend sẽ tự xin quyền location và gửi `lat/lng` lên API khi load trang Dashboard/Map/Search
+- `backend/.env` に `SERPAPI_API_KEY` を設定
+- Backend を再起動
+- Frontend は位置情報の許可後、`lat/lng` を API に送信します（Dashboard/Map など）
 
 ## YouTube search (Indoor training)
 
-- Bạn có 2 cách lấy video mới nhất:
-  - (Khuyến nghị) Dùng SerpApi: điền `SERPAPI_API_KEY` trong `backend/.env` (backend sẽ dùng engine `youtube`)
-  - Hoặc dùng YouTube Data API: điền `YOUTUBE_API_KEY` trong `backend/.env`
-- Frontend dùng nút `最新を取得 / Load latest` để gọi `POST /videos/sync` và cập nhật DB
+- 最新動画の取得方法:
+  - （推奨）SerpApi: `backend/.env` に `SERPAPI_API_KEY`（engine `youtube` を使用）
+  - YouTube Data API: `backend/.env` に `YOUTUBE_API_KEY`
+- Frontend の「最新を取得」ボタンで `POST /videos/sync` を呼び出し、DB を更新します
 
 ## Push notifications (Web Push)
 
-Để có thông báo lên notification center/lock screen (trên trình duyệt hỗ trợ), dùng Web Push + VAPID:
+ブラウザ通知（対応ブラウザの通知センター/ロック画面）には Web Push + VAPID を利用します:
 
 ```bash
 cd /Users/mac/Downloads/FitAir
 npx web-push generate-vapid-keys
 ```
 
-Điền vào `backend/.env`:
+`backend/.env` に設定:
 
 - `VAPID_PUBLIC_KEY=...`
 - `VAPID_PRIVATE_KEY=...`
 - `VAPID_SUBJECT=mailto:...`
 
-Trong app, mở chuông thông báo và bấm `通知を有効化 / Enable push` để đăng ký thiết bị.
+アプリ内の通知（ベル）から「プッシュ通知を有効化」を押してデバイス登録します。
 
-## Chạy backend (NestJS)
+## Backend 起動（NestJS）
 
 ```bash
 cd /Users/mac/Downloads/FitAir
 
 npm run prisma:generate -w @fitair/backend
-# Lần đầu setup DB:
+# 初回 DB セットアップ:
 npm run prisma:migrate:init -w @fitair/backend
 npm run prisma:seed -w @fitair/backend
 
-# Nếu DB trước đây đã seed demo, xoá demo:
+# 以前のデモデータを削除:
 npm run prisma:purge:demo -w @fitair/backend
 
 npm run start:dev -w @fitair/backend
 ```
 
-Test nhanh:
+動作確認:
 
 ```bash
 curl http://localhost:4000/health
 ```
 
-## Chạy frontend (Vite)
+## Frontend 起動（Vite）
 
 ```bash
 cd /Users/mac/Downloads/FitAir
 npm run dev -w @fitair/frontend
 ```
 
-Mở:
+アクセス:
 
 - Frontend: `http://localhost:3000`
 - Backend: `http://localhost:4000`
 
-## Chạy cả 2 cùng lúc
+## Backend + Frontend 同時起動
 
 ```bash
 cd /Users/mac/Downloads/FitAir
@@ -105,4 +105,4 @@ npm run dev
 
 ## Neon (Postgres)
 
-Xem thêm: `docs/NEON.md`
+詳細: `docs/NEON.md`

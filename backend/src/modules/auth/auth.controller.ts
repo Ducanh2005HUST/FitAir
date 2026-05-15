@@ -6,7 +6,6 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from './current-user.decorator';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { OAuthTokenDto } from './dto/oauth-token.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Controller('auth')
@@ -31,16 +30,6 @@ export class AuthController {
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.auth.resetPassword(dto);
-  }
-
-  @Post('google')
-  google(@Body() dto: OAuthTokenDto) {
-    return this.auth.oauthLogin('google', dto);
-  }
-
-  @Post('apple')
-  apple(@Body() dto: OAuthTokenDto) {
-    return this.auth.oauthLogin('apple', dto);
   }
 
   @UseGuards(JwtAuthGuard)

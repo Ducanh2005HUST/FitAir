@@ -94,7 +94,6 @@ export function Review() {
 
       <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8">
         <h1 className="text-2xl mb-2">レビューを書く</h1>
-        <p className="text-sm text-gray-600 mb-6">Viết đánh giá</p>
 
         <div className="mb-6">
           <div className="flex items-center gap-3">
@@ -105,7 +104,6 @@ export function Review() {
             />
             <div>
               <h2 className="font-medium">{location.name}</h2>
-              <p className="text-sm text-gray-600">{location.nameVi}</p>
             </div>
           </div>
         </div>
@@ -114,7 +112,7 @@ export function Review() {
           {/* Star Rating */}
           <div className="mb-6">
             <label className="block text-sm mb-3">
-              評価 / Đánh giá
+              評価
             </label>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -138,11 +136,11 @@ export function Review() {
             </div>
             {rating > 0 && (
               <p className="text-sm text-gray-600 mt-2">
-                {rating === 5 && '素晴らしい！/ Xuất sắc!'}
-                {rating === 4 && '良い / Tốt'}
-                {rating === 3 && '普通 / Trung bình'}
-                {rating === 2 && '悪い / Không tốt'}
-                {rating === 1 && '非常に悪い / Rất tệ'}
+                {rating === 5 && '素晴らしい！'}
+                {rating === 4 && '良い'}
+                {rating === 3 && '普通'}
+                {rating === 2 && '悪い'}
+                {rating === 1 && '非常に悪い'}
               </p>
             )}
           </div>
@@ -150,12 +148,12 @@ export function Review() {
           {/* Comment */}
           <div className="mb-6">
             <label className="block text-sm mb-2">
-              コメント / Bình luận
+              コメント
             </label>
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="この施設についてのご意見をお聞かせください... / Chia sẻ trải nghiệm của bạn..."
+              placeholder="この施設についてのご意見をお聞かせください..."
               className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               rows={6}
             />
@@ -186,7 +184,7 @@ export function Review() {
 
       {/* Tips */}
       <div className="mt-6 bg-blue-50 border border-blue-100 rounded-xl p-4">
-        <h3 className="text-sm mb-2">💡 レビューのヒント / Gợi ý đánh giá</h3>
+        <h3 className="text-sm mb-2">💡 レビューのヒント</h3>
         <ul className="text-sm text-gray-700 space-y-1">
           <li>• 清潔さや設備の状態について</li>
           <li>• スタッフの対応</li>

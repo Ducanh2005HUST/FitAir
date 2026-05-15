@@ -50,7 +50,7 @@ export function EditProfile() {
       });
       await refreshMe();
       toast.success('プロフィールを更新しました', {
-        description: 'Thông tin cá nhân đã được cập nhật thành công',
+        description: 'プロフィール情報を更新しました',
       });
       navigate('/profile');
     } catch (err) {
@@ -85,7 +85,7 @@ export function EditProfile() {
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
             プロフィール編集
           </h1>
-          <p className="text-sm text-gray-500">Chỉnh sửa thông tin cá nhân</p>
+          <p className="text-sm text-gray-500">プロフィール情報を編集します</p>
         </div>
       </div>
 
@@ -112,7 +112,7 @@ export function EditProfile() {
                   const file = e.target.files?.[0];
                   if (!file) return;
                   if (file.size > 500 * 1024) {
-                    toast.error('画像が大きすぎます', { description: 'Vui lòng chọn ảnh < 500KB' });
+                    toast.error('画像が大きすぎます', { description: '500KB 未満の画像を選択してください' });
                     e.currentTarget.value = '';
                     return;
                   }
@@ -130,7 +130,7 @@ export function EditProfile() {
                 size="sm"
                 onClick={() => document.getElementById('avatar-file')?.click()}
               >
-                写真を変更 / Đổi ảnh đại diện
+                写真を変更
               </Button>
             </div>
 
@@ -141,7 +141,7 @@ export function EditProfile() {
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                 <User className="w-4 h-4 text-gray-400" />
-                <span>名前 / Họ và tên</span>
+                <span>名前</span>
               </label>
               <Input
                 type="text"
@@ -157,7 +157,7 @@ export function EditProfile() {
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                 <Mail className="w-4 h-4 text-gray-400" />
-                <span>メール / Email</span>
+                <span>メール</span>
               </label>
               <Input
                 type="email"
@@ -173,7 +173,7 @@ export function EditProfile() {
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                 <MapPin className="w-4 h-4 text-gray-400" />
-                <span>場所 / Địa điểm</span>
+                <span>場所</span>
               </label>
               <Input
                 type="text"
@@ -187,7 +187,7 @@ export function EditProfile() {
             {/* Bio Field */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                自己紹介 / Giới thiệu bản thân
+                自己紹介
               </label>
               <textarea
                 value={formData.bio}
@@ -204,7 +204,7 @@ export function EditProfile() {
             {/* Favorite Sports */}
             <div className="space-y-3">
               <label className="text-sm font-medium text-gray-700">
-                お気に入りのスポーツ / Môn thể thao yêu thích
+                お気に入りのスポーツ
               </label>
 
               {/* Sports List */}
@@ -261,7 +261,7 @@ export function EditProfile() {
               onClick={() => navigate('/profile')}
               className="flex-1 rounded-[16px]"
             >
-              キャンセル / Hủy
+              キャンセル
             </Button>
             <Button
               type="submit"
@@ -269,7 +269,7 @@ export function EditProfile() {
               className="flex-1 rounded-[16px] bg-blue-500 hover:bg-blue-600 disabled:opacity-70"
             >
               <Save className="w-4 h-4" />
-              {isLoading ? '保存中…' : '保存 / Lưu thay đổi'}
+              {isLoading ? '保存中…' : '保存'}
             </Button>
           </div>
         </div>

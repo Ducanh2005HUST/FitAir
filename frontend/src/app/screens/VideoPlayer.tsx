@@ -34,7 +34,7 @@ export function VideoPlayer() {
   if (!video) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-6 md:px-8 md:py-8">
-        <p className="text-center text-gray-600">動画が見つかりませんでした / Video không tìm thấy</p>
+        <p className="text-center text-gray-600">動画が見つかりませんでした</p>
       </div>
     );
   }
@@ -72,7 +72,7 @@ export function VideoPlayer() {
         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
       >
         <ArrowLeft className="w-5 h-5" />
-        <span>戻る / Quay lại</span>
+        <span>戻る</span>
       </button>
 
       {/* Video Player */}
@@ -93,7 +93,6 @@ export function VideoPlayer() {
           {/* Title */}
           <div className="mb-4">
             <h1 className="text-2xl md:text-3xl mb-2">{video.titleJp}</h1>
-            <p className="text-gray-600">{video.titleVn ?? ''}</p>
           </div>
 
           {/* Stats Row */}
@@ -101,7 +100,7 @@ export function VideoPlayer() {
             <div className="flex items-center gap-2 bg-blue-50 rounded-lg p-3">
               <Clock className="w-5 h-5 text-blue-600" />
               <div>
-                <p className="text-xs text-gray-600">時間 / Thời lượng</p>
+                <p className="text-xs text-gray-600">時間</p>
                 <p className="font-medium text-gray-900">{video.duration ?? '—'}</p>
               </div>
             </div>
@@ -109,7 +108,7 @@ export function VideoPlayer() {
             <div className="flex items-center gap-2 bg-orange-50 rounded-lg p-3">
               <Flame className="w-5 h-5 text-orange-600" />
               <div>
-                <p className="text-xs text-gray-600">消費カロリー / Calo</p>
+                <p className="text-xs text-gray-600">消費カロリー</p>
                 <p className="font-medium text-gray-900">{video.calories ?? '—'} kcal</p>
               </div>
             </div>
@@ -117,7 +116,7 @@ export function VideoPlayer() {
             <div className="flex items-center gap-2 bg-purple-50 rounded-lg p-3">
               <TrendingUp className="w-5 h-5 text-purple-600" />
               <div>
-                <p className="text-xs text-gray-600">レベル / Cấp độ</p>
+                <p className="text-xs text-gray-600">レベル</p>
                 <p className="font-medium text-gray-900">{levelLabel(video.level)}</p>
               </div>
             </div>
@@ -134,13 +133,13 @@ export function VideoPlayer() {
           {/* Category Badge */}
           <div className="flex flex-wrap gap-2 mb-6">
             <span className="inline-flex items-center px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm">
-              {video.category ?? 'General'}
+              {video.category ?? '一般'}
             </span>
           </div>
 
           {/* Description */}
           <div className="border-t border-gray-100 pt-6">
-            <h2 className="font-medium text-lg mb-3">説明 / Mô tả</h2>
+            <h2 className="font-medium text-lg mb-3">説明</h2>
             <p className="text-gray-700 mb-2">{video.description ?? ''}</p>
           </div>
         </div>
@@ -149,7 +148,6 @@ export function VideoPlayer() {
       {/* Recommended Videos */}
       <div className="bg-white rounded-2xl p-6 shadow-lg">
         <h2 className="text-xl mb-4">おすすめの動画</h2>
-        <p className="text-sm text-gray-600 mb-6">Video đề xuất</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {recommended.map((recommendedVideo) => (
@@ -177,9 +175,8 @@ export function VideoPlayer() {
 
                 <div className="p-4">
                   <h3 className="font-medium text-gray-900 mb-1">{recommendedVideo.titleJp}</h3>
-                  <p className="text-sm text-gray-600 mb-2">{recommendedVideo.titleVn ?? ''}</p>
                   <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                    {recommendedVideo.category ?? 'General'}
+                    {recommendedVideo.category ?? '一般'}
                   </span>
                 </div>
               </div>

@@ -27,6 +27,43 @@ function boundingBox(lat: number, lng: number, radiusKm: number) {
   };
 }
 
+const HANOI_DISTRICTS = [
+  'Ba Đình',
+  'Hoàn Kiếm',
+  'Hai Bà Trưng',
+  'Đống Đa',
+  'Cầu Giấy',
+  'Tây Hồ',
+  'Thanh Xuân',
+  'Hoàng Mai',
+  'Long Biên',
+  'Hà Đông',
+  'Nam Từ Liêm',
+  'Bắc Từ Liêm',
+  'Gia Lâm',
+  'Đông Anh',
+  'Thanh Trì',
+  'Sóc Sơn',
+] as const;
+
+function extractHanoiDistrict(address: string): string | null {
+  const a = address ?? '';
+  for (const d of HANOI_DISTRICTS) {
+    if (a.includes(d)) return d;
+  }
+  return null;
+}
+
+function defaultFacilities(type: SpotType): string[] {
+  if (type === 'indoor') return ['Wi‑Fi', 'シャワー', '駐車場', 'ロッカー'];
+  return ['トイレ', '給水'];
+}
+
+function defaultSports(type: SpotType): string[] {
+  if (type === 'indoor') return ['筋トレ', 'ヨガ'];
+  return ['ランニング', 'ウォーキング'];
+}
+
 @Injectable()
 export class SpotsService {
   constructor(
@@ -45,6 +82,11 @@ export class SpotsService {
     const lng = q.lng ? Number(q.lng) : undefined;
     const radiusKm = q.radiusKm ? Number(q.radiusKm) : undefined;
     const radiusKmUsed = lat != null && lng != null ? radiusKm ?? 10 : radiusKm;
+    if (lat != null && lng != null) {
+      const box = boundingBox(lat, lng, radiusKmUsed ?? 10);
+      where.lat = { gte: box.minLat, lte: box.maxLat };
+      where.lng = { gte: box.minLng, lte: box.maxLng };
+    }
 
     // If caller provides lat/lng, enrich DB with nearby gyms/parks from a provider (SerpApi preferred).
     if (lat != null && lng != null) {
@@ -61,7 +103,20 @@ export class SpotsService {
         },
       });
 
-      const shouldFetchSerpApi = cachedCount < 10;
+      const missingMetaCount = await this.prisma.spot.count({
+        where: {
+          source: 'serpapi',
+          lat: { gte: box.minLat, lte: box.maxLat },
+          lng: { gte: box.minLng, lte: box.maxLng },
+          OR: [
+            { district: null },
+            { sports: { equals: [] } },
+            { facilities: { equals: [] } },
+          ],
+        },
+      });
+
+      const shouldFetchSerpApi = cachedCount < 10 || missingMetaCount > 0;
 
       const serpQueries: string[] =
         q.type === 'outdoor' ? ['park'] : q.type === 'indoor' ? ['gym'] : ['gym', 'park'];
@@ -94,17 +149,21 @@ export class SpotsService {
           const typeStr = `${r.type ?? ''} ${(r.types ?? []).join(' ')}`.toLowerCase();
           const spotType: SpotType = typeStr.includes('park') ? 'outdoor' : 'indoor';
           const imageUrl = r.thumbnail ?? r.serpapi_thumbnail;
+          const district = extractHanoiDistrict(address);
 
           await this.prisma.spot.upsert({
             where: { id },
             update: {
               name,
               address,
+              district: district ?? undefined,
               lat: plat,
               lng: plng,
               type: spotType,
               hours: r.hours ?? undefined,
               imageUrls: imageUrl ? [imageUrl] : undefined,
+              facilities: defaultFacilities(spotType),
+              sports: defaultSports(spotType),
               source: 'serpapi',
               sourceRefreshedAt: now,
             },
@@ -112,12 +171,13 @@ export class SpotsService {
               id,
               name,
               address,
+              district,
               lat: plat,
               lng: plng,
               type: spotType,
               hours: r.hours ?? null,
-              facilities: [],
-              sports: [],
+              facilities: defaultFacilities(spotType),
+              sports: defaultSports(spotType),
               imageUrls: imageUrl ? [imageUrl] : [],
               source: 'serpapi',
               sourceRefreshedAt: now,
@@ -146,15 +206,19 @@ export class SpotsService {
           if (typeof plat !== 'number' || typeof plng !== 'number') continue;
 
           const spotType: SpotType = p.types?.includes('park') ? 'outdoor' : 'indoor';
+          const district = extractHanoiDistrict(address);
 
           await this.prisma.spot.upsert({
             where: { id: p.id },
             update: {
               name,
               address,
+              district: district ?? undefined,
               lat: plat,
               lng: plng,
               type: spotType,
+              facilities: defaultFacilities(spotType),
+              sports: defaultSports(spotType),
               source: 'google',
               sourceRefreshedAt: new Date(),
             },
@@ -162,11 +226,12 @@ export class SpotsService {
               id: p.id,
               name,
               address,
+              district,
               lat: plat,
               lng: plng,
               type: spotType,
-              facilities: [],
-              sports: [],
+              facilities: defaultFacilities(spotType),
+              sports: defaultSports(spotType),
               imageUrls: [],
               source: 'google',
               sourceRefreshedAt: new Date(),

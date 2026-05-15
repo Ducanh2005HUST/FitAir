@@ -54,20 +54,20 @@ export function Register() {
           <h1 className="text-4xl font-bold text-blue-600 mb-2">FitAir</h1>
           <p className="text-gray-600">フィットエア</p>
           <p className="text-sm text-gray-500 mt-2">
-            アカウントを作成 / Tạo tài khoản
+            アカウントを作成
           </p>
         </div>
 
         {/* Register Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           <h2 className="text-2xl mb-2">新規登録</h2>
-          <p className="text-sm text-gray-600 mb-6">Đăng ký tài khoản mới</p>
+          <p className="text-sm text-gray-600 mb-6">新しいアカウントを作成します</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name */}
             <div>
               <label className="block text-sm mb-2">
-                お名前 / Tên
+                お名前
               </label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -84,7 +84,7 @@ export function Register() {
             {/* Email */}
             <div>
               <label className="block text-sm mb-2">
-                メールアドレス / Email
+                メールアドレス
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -101,7 +101,7 @@ export function Register() {
             {/* Password */}
             <div>
               <label className="block text-sm mb-2">
-                パスワード / Mật khẩu
+                パスワード
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -129,7 +129,7 @@ export function Register() {
             {/* Confirm Password */}
             <div>
               <label className="block text-sm mb-2">
-                パスワード確認 / Xác nhận mật khẩu
+                パスワード確認
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -161,20 +161,12 @@ export function Register() {
                 ログイン
               </Link>
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Đã có tài khoản?{' '}
-              <Link to="/login" className="text-blue-600 hover:underline">
-                Đăng nhập
-              </Link>
-            </p>
           </div>
         </div>
 
         {/* Terms */}
         <p className="mt-6 text-xs text-center text-gray-500">
           登録することで、利用規約とプライバシーポリシーに同意したことになります。
-          <br />
-          Bằng việc đăng ký, bạn đồng ý với điều khoản và chính sách bảo mật.
         </p>
       </div>
     </div>

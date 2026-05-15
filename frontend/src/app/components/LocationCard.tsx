@@ -11,11 +11,15 @@ export function LocationCard({ location }: LocationCardProps) {
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100">
       <div className="relative h-40">
-        <img 
-          src={location.image} 
-          alt={location.name}
-          className="w-full h-full object-cover"
-        />
+        {location.image ? (
+          <img 
+            src={location.image} 
+            alt={location.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200" aria-label={location.name} />
+        )}
         <div className="absolute top-2 right-2">
           <AQIIndicator value={location.aqi} />
         </div>
@@ -23,7 +27,6 @@ export function LocationCard({ location }: LocationCardProps) {
       
       <div className="p-4">
         <h3 className="font-medium text-gray-900 mb-1">{location.name}</h3>
-        <p className="text-xs text-gray-500 mb-3">{location.nameVi}</p>
         
         <div className="flex items-center justify-between text-sm mb-3">
           <div className="flex items-center gap-1 text-yellow-600">
@@ -49,7 +52,7 @@ export function LocationCard({ location }: LocationCardProps) {
                 key={sport}
                 className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs"
               >
-                {sport.split(' / ')[0]}
+                {sport}
               </span>
             ))}
             {location.sportTypes.length > 2 && (
@@ -66,7 +69,7 @@ export function LocationCard({ location }: LocationCardProps) {
               ? 'bg-green-100 text-green-700' 
               : 'bg-blue-100 text-blue-700'
           }`}>
-            {location.indoor ? '室内' : '屋外'} • {location.indoor ? 'Trong nhà' : 'Ngoài trời'}
+            {location.indoor ? '室内' : '屋外'}
           </span>
         </div>
 
@@ -75,7 +78,7 @@ export function LocationCard({ location }: LocationCardProps) {
           to={`/location/${location.id}`}
           className="block mt-3 w-full text-center bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
         >
-          詳細を見る / Xem chi tiết
+          詳細を見る
         </Link>
       </div>
     </div>

@@ -2,7 +2,6 @@ import { createBrowserRouter } from "react-router";
 import { Layout } from "./components/Layout";
 import { RequireAuth } from "./auth/RequireAuth";
 import { Dashboard } from "./screens/Dashboard";
-import { Search } from "./screens/Search";
 import { MapScreen } from "./screens/MapScreen";
 import { LocationDetail } from "./screens/LocationDetail";
 import { Review } from "./screens/Review";

@@ -60,7 +60,6 @@ export function Dashboard() {
         <h1 className="text-2xl md:text-3xl mb-2">
           おはようございます
         </h1>
-        <p className="text-sm text-gray-600">Chào buổi sáng</p>
       </div>
 
       {/* Current AQI Card */}
@@ -77,7 +76,7 @@ export function Dashboard() {
               🌡️ {(weather?.tempC ?? currentAQI.temperature).toFixed(1)}°C
             </div>
             <div className="text-sm text-gray-600">
-              温度 / Nhiệt độ
+              温度
             </div>
             {weather?.description ? (
               <div className="mt-1 text-xs text-gray-500">{weather.description}</div>
@@ -89,7 +88,7 @@ export function Dashboard() {
               💧 {Math.round(weather?.humidity ?? currentAQI.humidity)}%
             </div>
             <div className="text-sm text-gray-600">
-              湿度 / Độ ẩm
+              湿度
             </div>
           </div>
         </div>
@@ -101,9 +100,6 @@ export function Dashboard() {
           <Clock className="w-6 h-6 mt-1 flex-shrink-0" />
           <div>
             <h3 className="text-lg mb-1">おすすめの運動時間</h3>
-            <p className="text-sm opacity-90 mb-2">
-              Thời gian tập tốt nhất
-            </p>
             <div className="text-2xl">
               {currentAQI.bestTime}
             </div>
@@ -119,9 +115,6 @@ export function Dashboard() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl">近くの施設</h2>
-            <p className="text-sm text-gray-500">
-              Địa điểm gần bạn
-            </p>
           </div>
           <Link
             to="/search"
@@ -133,7 +126,7 @@ export function Dashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {nearbyLocations.length === 0 ? (
-            <div className="col-span-full text-sm text-gray-500">Loading…</div>
+            <div className="col-span-full text-sm text-gray-500">読み込み中…</div>
           ) : (
             nearbyLocations.map((location: any) => (
               <LocationCard key={location.id} location={location} />
