@@ -12,7 +12,7 @@ export function Sidebar() {
     { path: '/', icon: Home, label: 'ダッシュボード' },
     { path: '/search', icon: Search, label: '検索・マップ' },
     { path: '/indoor', icon: Dumbbell, label: '室内トレーニング' },
-    { path: '/schedule', icon: Calendar, label: 'スケジュール' },
+    { path: '/schedule', icon: Calendar, label: 'トレーニングスケジュール' },
     { path: '/community', icon: Users, label: 'コミュニティ' },
     { path: '/profile', icon: User, label: 'プロフィール' },
   ];
