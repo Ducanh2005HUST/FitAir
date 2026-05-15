@@ -70,8 +70,8 @@ export class NotificationJobsService {
       const recommendIndoor = aqi.aqi > 100;
       const title = 'FitAir';
       const message = recommendIndoor
-        ? `Tới giờ tập: ${s.title}. AQI ${aqi.aqi} (${aqi.category}) → nên tập trong nhà.`
-        : `Tới giờ tập: ${s.title}. Thời tiết: ${weather.description ?? ''} ${weather.tempC.toFixed(1)}°C.`;
+        ? `トレーニング時間です: ${s.title}. AQI ${aqi.aqi}（${aqi.category}）のため、室内トレーニングをおすすめします。`
+        : `トレーニング時間です: ${s.title}. 天気: ${weather.description ?? ''} ${weather.tempC.toFixed(1)}°C.`;
 
       const actionPath = recommendIndoor ? '/indoor' : '/search';
 
@@ -86,7 +86,7 @@ export class NotificationJobsService {
             scheduledAt: scheduledAt.toISOString(),
             aqi,
             weather,
-            action: { label: recommendIndoor ? '室内トレーニング / Indoor' : '地図を見る / Map', path: actionPath },
+            action: { label: recommendIndoor ? '室内トレーニング' : '地図を見る', path: actionPath },
           },
         },
       });
@@ -104,7 +104,7 @@ export class NotificationJobsService {
         body: notification.message,
         url: `/?notificationId=${encodeURIComponent(notification.id)}`,
         notificationId: notification.id,
-        actions: [{ action: 'open', title: 'Open' }],
+        actions: [{ action: 'open', title: '開く' }],
       });
 
       // Also send email (Gmail SMTP) if configured.
@@ -112,7 +112,7 @@ export class NotificationJobsService {
         await this.mail.sendWorkoutReminder({
           to: s.user.email,
           title: s.title,
-          message: `${message}\n\nOpen FitAir: http://localhost:3000/?notificationId=${notification.id}`,
+          message: `${message}\n\nFitAir を開く: http://localhost:3000/?notificationId=${notification.id}`,
         });
       }
     }

@@ -70,9 +70,9 @@ export function LocationDetail() {
   };
 
   const crowdLevelText = {
-    low: { ja: '空いている', vi: 'Vắng', color: 'text-green-600' },
-    medium: { ja: '普通', vi: 'Trung bình', color: 'text-yellow-600' },
-    high: { ja: '混雑', vi: 'Đông', color: 'text-red-600' },
+    low: { ja: '空いている', color: 'text-green-600' },
+    medium: { ja: '普通', color: 'text-yellow-600' },
+    high: { ja: '混雑', color: 'text-red-600' },
   };
 
   return (
@@ -93,7 +93,7 @@ export function LocationDetail() {
         {fromPostId && (
           <div className="absolute top-4 left-16 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium flex items-center gap-2 animate-in fade-in slide-in-from-left duration-300">
             <span>📝</span>
-            <span>投稿から / Từ bài viết</span>
+            <span>投稿から</span>
           </div>
         )}
           <div className="absolute top-4 right-4">
@@ -105,7 +105,6 @@ export function LocationDetail() {
         {/* Title and Rating */}
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl mb-2">{location.name}</h1>
-          <p className="text-gray-600 mb-3">{location.nameVi}</p>
           
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1 text-yellow-600">
@@ -152,7 +151,7 @@ export function LocationDetail() {
 
         {/* Facilities */}
         <div className="mb-6">
-          <h2 className="text-lg mb-3">施設・設備 / Tiện nghi</h2>
+          <h2 className="text-lg mb-3">施設・設備</h2>
           <div className="flex flex-wrap gap-2">
             {location.facilities.map((facility) => (
               <span
@@ -167,7 +166,7 @@ export function LocationDetail() {
 
         {/* Sport Types */}
         <div className="mb-6">
-          <h2 className="text-lg mb-3">利用可能なスポーツ / Môn thể thao</h2>
+          <h2 className="text-lg mb-3">利用可能なスポーツ</h2>
           <div className="flex flex-wrap gap-2">
             {location.sportTypes.map((sport) => (
               <span
@@ -199,7 +198,7 @@ export function LocationDetail() {
             }}
           >
             <Navigation className="w-5 h-5" />
-            <span>ナビゲート / Chỉ đường</span>
+            <span>ナビ</span>
           </button>
           
           <Link
@@ -215,7 +214,7 @@ export function LocationDetail() {
         <div className="bg-gray-50 rounded-xl p-4 mb-6">
           <div className="flex items-center gap-2 mb-2">
             <Clock className="w-5 h-5 text-gray-600" />
-            <h3 className="font-medium">営業時間 / Giờ mở cửa</h3>
+            <h3 className="font-medium">営業時間</h3>
           </div>
           <p className="text-sm text-gray-700">月〜金: 6:00 - 22:00</p>
           <p className="text-sm text-gray-700">土日: 7:00 - 20:00</p>
@@ -223,7 +222,7 @@ export function LocationDetail() {
 
         {/* Reviews */}
         <div>
-          <h2 className="text-lg mb-4">レビュー / Đánh giá</h2>
+          <h2 className="text-lg mb-4">レビュー</h2>
           
           {reviews.length > 0 ? (
             <div className="space-y-4">

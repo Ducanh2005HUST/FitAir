@@ -87,7 +87,7 @@ function NotificationDialogInner({
         <div className="space-y-4 overflow-y-auto pr-1" style={{ maxHeight: 'calc(85vh - 90px)' }}>
           {!token ? (
             <div className="rounded-xl border border-gray-200 p-4 text-sm text-gray-700">
-              ログインしてください / Vui lòng đăng nhập
+              ログインしてください
               <div className="mt-3">
                 <Link
                   to="/login"
@@ -101,7 +101,7 @@ function NotificationDialogInner({
           ) : selected ? (
             <div className="rounded-xl border border-gray-200 p-4">
               <button className="text-xs text-blue-600 hover:underline" onClick={() => setSelectedId(null)}>
-                ← Back
+                ← 戻る
               </button>
               <div className="mt-2 font-medium text-gray-900">{selected.title}</div>
               <div className="mt-1 text-sm text-gray-700">{selected.message}</div>
@@ -113,14 +113,14 @@ function NotificationDialogInner({
                   onClick={onClose}
                   className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm text-white hover:bg-blue-700"
                 >
-                  {selected.data.action.label ?? 'Open'}
+                  {selected.data.action.label ?? '開く'}
                 </Link>
               ) : null}
             </div>
           ) : isLoading ? (
-            <div className="text-sm text-gray-600">Loading…</div>
+            <div className="text-sm text-gray-600">読み込み中…</div>
           ) : items.length === 0 ? (
-            <div className="text-sm text-gray-600">No notifications</div>
+            <div className="text-sm text-gray-600">通知はありません</div>
           ) : (
             <>
               <div className="flex gap-2">
@@ -146,7 +146,7 @@ function NotificationDialogInner({
                     }
                   }}
                 >
-                  {isEnablingPush ? 'Enabling…' : '通知を有効化 / Enable push'}
+                  {isEnablingPush ? '有効化中…' : 'プッシュ通知を有効化'}
                 </button>
                 <button
                   className="rounded-xl border border-red-200 bg-white px-4 py-3 text-sm text-red-600 hover:bg-red-50"
@@ -156,7 +156,7 @@ function NotificationDialogInner({
                     setItems([]);
                   }}
                 >
-                  すべて削除 / Xoá tất cả
+                  すべて削除
                 </button>
               </div>
               {items.map((n) => (

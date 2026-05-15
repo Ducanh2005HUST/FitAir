@@ -7,10 +7,10 @@ interface AQIIndicatorProps {
 
 export function AQIIndicator({ value, size = 'small' }: AQIIndicatorProps) {
   const getAQIStatus = (aqi: number) => {
-    if (aqi <= 50) return { status: '良好', statusVi: 'Tốt', color: 'bg-green-500', textColor: 'text-green-700', bgLight: 'bg-green-50' };
-    if (aqi <= 100) return { status: '普通', statusVi: 'TB', color: 'bg-yellow-500', textColor: 'text-yellow-700', bgLight: 'bg-yellow-50' };
-    if (aqi <= 150) return { status: '悪い', statusVi: 'Xấu', color: 'bg-orange-500', textColor: 'text-orange-700', bgLight: 'bg-orange-50' };
-    return { status: '危険', statusVi: 'Nguy hiểm', color: 'bg-red-500', textColor: 'text-red-700', bgLight: 'bg-red-50' };
+    if (aqi <= 50) return { status: '良好', color: 'bg-green-500', textColor: 'text-green-700', bgLight: 'bg-green-50' };
+    if (aqi <= 100) return { status: '普通', color: 'bg-yellow-500', textColor: 'text-yellow-700', bgLight: 'bg-yellow-50' };
+    if (aqi <= 150) return { status: '悪い', color: 'bg-orange-500', textColor: 'text-orange-700', bgLight: 'bg-orange-50' };
+    return { status: '危険', color: 'bg-red-500', textColor: 'text-red-700', bgLight: 'bg-red-50' };
   };
 
   const aqiInfo = getAQIStatus(value);
@@ -25,9 +25,7 @@ export function AQIIndicator({ value, size = 'small' }: AQIIndicatorProps) {
         </div>
         <div className={`text-5xl mb-2 ${aqiInfo.textColor}`}>{value}</div>
         <div className={`text-xl ${aqiInfo.textColor} mb-1`}>AQI</div>
-        <div className="text-sm text-gray-600">
-          {aqiInfo.status} <span className="text-xs">({aqiInfo.statusVi})</span>
-        </div>
+        <div className="text-sm text-gray-600">{aqiInfo.status}</div>
       </div>
     );
   }

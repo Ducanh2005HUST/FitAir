@@ -6,7 +6,6 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { OAuthTokenDto } from './dto/oauth-token.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MailService } from '../mail/mail.service';
 
@@ -102,10 +101,5 @@ export class AuthService {
     ]);
 
     return { ok: true };
-  }
-
-  async oauthLogin(provider: 'google' | 'apple', _dto: OAuthTokenDto) {
-    // TODO: verify token with provider. For now return 501-like message.
-    return { ok: false, provider, message: 'OAuth not implemented yet' };
   }
 }

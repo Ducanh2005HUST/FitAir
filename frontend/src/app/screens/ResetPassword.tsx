@@ -23,7 +23,7 @@ export function ResetPassword() {
           <Wind className="w-8 h-8 text-white" strokeWidth={2.5} />
         </div>
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">コード入力</h1>
-        <p className="mt-2 text-sm text-gray-600">Nhập mã 6 số + mật khẩu mới</p>
+        <p className="mt-2 text-sm text-gray-600">6桁コードと新しいパスワードを入力してください</p>
       </div>
 
       <div className="w-full max-w-sm">
@@ -38,18 +38,18 @@ export function ResetPassword() {
                 method: 'POST',
                 body: JSON.stringify({ email, code, newPassword }),
               });
-              toast.success('更新しました', { description: 'Hãy đăng nhập lại' });
+              toast.success('更新しました', { description: '再度ログインしてください' });
               navigate('/login');
             } catch (err) {
-              toast.error(err instanceof Error ? err.message : 'Failed');
+              toast.error(err instanceof Error ? err.message : '失敗しました');
             } finally {
               setIsLoading(false);
             }
           }}
         >
-          <Field icon={<Mail className="h-5 w-5" />} value={email} onChange={setEmail} placeholder="Email" type="email" />
-          <Field icon={<ShieldCheck className="h-5 w-5" />} value={code} onChange={setCode} placeholder="6-digit code" inputMode="numeric" />
-          <Field icon={<Lock className="h-5 w-5" />} value={newPassword} onChange={setNewPassword} placeholder="New password" type="password" />
+          <Field icon={<Mail className="h-5 w-5" />} value={email} onChange={setEmail} placeholder="メール" type="email" />
+          <Field icon={<ShieldCheck className="h-5 w-5" />} value={code} onChange={setCode} placeholder="6桁コード" inputMode="numeric" />
+          <Field icon={<Lock className="h-5 w-5" />} value={newPassword} onChange={setNewPassword} placeholder="新しいパスワード" type="password" />
 
           <button
             type="submit"
@@ -95,4 +95,3 @@ function Field(props: {
     </div>
   );
 }
-

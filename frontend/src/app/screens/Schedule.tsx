@@ -117,7 +117,7 @@ export function Schedule() {
   const save = async () => {
     if (!token) return;
     if (!selectedDate || !eventForm.title || !eventForm.time) {
-      toast.error('必須項目を入力してください', { description: 'Vui lòng điền đầy đủ thông tin' });
+      toast.error('必須項目を入力してください', { description: 'タイトルと時間は必須です' });
       return;
     }
     setIsSaving(true);
@@ -330,4 +330,3 @@ export function Schedule() {
     </div>
   );
 }
-

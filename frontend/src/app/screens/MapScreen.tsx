@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { List, LocateFixed, MapPin, Search as SearchIcon, SlidersHorizontal, Star, Wind, X } from 'lucide-react';
 import { Link } from 'react-router';
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import { apiClient } from '../api/client';
 import type { SpotDto } from '../api/types';
 import { useUserLocation } from '../location/useUserLocation';
@@ -28,8 +28,11 @@ export function MapScreen() {
   const [aqi, setAqi] = useState<number>(75);
   const [selectedDistrict, setSelectedDistrict] = useState<string>('all');
   const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
+  const [hoveredSpotId, setHoveredSpotId] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(true);
   const { coords } = useUserLocation({ watch: true });
+  // If location permission is denied/unavailable, fall back to Hanoi center so we can still load spots.
+  const effectiveCoords = useMemo(() => coords ?? { lat: 21.0285, lng: 105.8542 }, [coords]);
   const cacheRef = useRef(new Map<string, SpotDto[]>());
   const sortMenuRef = useRef<HTMLDivElement | null>(null);
   const [query, setQuery] = useState('');
@@ -54,23 +57,27 @@ export function MapScreen() {
   }, [showSortMenu]);
 
   const coordKey = useMemo(() => {
-    if (!coords) return 'hanoi-default';
     // Round so watch-position small jitter doesn't refetch constantly
-    return `${coords.lat.toFixed(3)},${coords.lng.toFixed(3)}`;
-  }, [coords]);
+    return `${effectiveCoords.lat.toFixed(3)},${effectiveCoords.lng.toFixed(3)}`;
+  }, [effectiveCoords.lat, effectiveCoords.lng]);
+
+  const cacheKey = useMemo(() => {
+    const typeKey = typeFilter.indoor && !typeFilter.outdoor ? 'indoor' : typeFilter.outdoor && !typeFilter.indoor ? 'outdoor' : 'all';
+    return `${coordKey}|r=${radiusKm}|d=${selectedDistrict}|s=${sport}|t=${typeKey}`;
+  }, [coordKey, radiusKm, selectedDistrict, sport, typeFilter.indoor, typeFilter.outdoor]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const cached = cacheRef.current.get(coordKey);
+        const cached = cacheRef.current.get(cacheKey);
         if (cached) setSpots(cached);
 
-        const aqiOut = await apiClient.aqi({ lat: coords?.lat, lng: coords?.lng });
+        const aqiOut = await apiClient.aqi({ lat: effectiveCoords.lat, lng: effectiveCoords.lng });
         const s = await apiClient.spots({
-          sort: coords ? (sort === 'aqi' || sort === 'name' ? 'distance' : sort) : 'rating',
-          lat: coords?.lat,
-          lng: coords?.lng,
+          sort: sort === 'aqi' || sort === 'name' ? 'distance' : sort,
+          lat: effectiveCoords.lat,
+          lng: effectiveCoords.lng,
           radiusKm,
           district: selectedDistrict !== 'all' ? selectedDistrict : undefined,
           sport: sport !== 'all' ? sport : undefined,
@@ -83,13 +90,8 @@ export function MapScreen() {
         });
         if (cancelled) return;
         setAqi(aqiOut.aqi);
-        const prev = cacheRef.current.get(coordKey) ?? [];
-        const merged = new Map<string, SpotDto>();
-        for (const p of prev) merged.set(p.id, p);
-        for (const n of s) merged.set(n.id, n);
-        const out = Array.from(merged.values());
-        cacheRef.current.set(coordKey, out);
-        setSpots(out);
+        cacheRef.current.set(cacheKey, s);
+        setSpots(s);
       } catch {
         if (cancelled) return;
         setSpots([]);
@@ -98,12 +100,11 @@ export function MapScreen() {
     return () => {
       cancelled = true;
     };
-  }, [coordKey, coords?.lat, coords?.lng, sort, radiusKm, selectedDistrict, sport, typeFilter.indoor, typeFilter.outdoor]);
+  }, [cacheKey, effectiveCoords.lat, effectiveCoords.lng, sort, radiusKm, selectedDistrict, sport, typeFilter.indoor, typeFilter.outdoor]);
 
   const districts = useMemo(() => {
-    const set = new Set<string>();
-    for (const s of spots) if (s.district) set.add(s.district);
-    return ['all', ...Array.from(set).sort((a, b) => a.localeCompare(b))];
+    // Keep a stable list (regardless of current results) so filtering always works.
+    return ['all', ...HANOI_DISTRICTS.map((d) => d.key)];
   }, [spots]);
 
   const sports = useMemo(() => {
@@ -126,6 +127,7 @@ export function MapScreen() {
       out = out.filter((s) => (typeFilter.indoor ? s.type === 'indoor' : s.type === 'outdoor'));
     }
     if (minRating > 0) out = out.filter((s) => (s.avgRating ?? 0) >= minRating);
+    if (radiusKm > 0) out = out.filter((s) => (s.distanceKm ?? Infinity) <= radiusKm);
 
     if (sort === 'rating') {
       out = [...out].sort((a, b) => (b.avgRating ?? 0) - (a.avgRating ?? 0));
@@ -134,15 +136,18 @@ export function MapScreen() {
     } else if (sort === 'aqi') {
       // We don't have per-spot AQI yet; keep stable
       out = [...out];
-    } else if (coords) {
+    } else {
       out = [...out].sort((a, b) => (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9));
     }
     return out;
-  }, [spots, selectedDistrict, query, sort, coords, sport, typeFilter.indoor, typeFilter.outdoor, minRating]);
+  }, [spots, selectedDistrict, query, sort, sport, typeFilter.indoor, typeFilter.outdoor, minRating, radiusKm]);
 
   const selectedSpot = useMemo(
-    () => (selectedSpotId ? filtered.find((s) => s.id === selectedSpotId) : null),
-    [filtered, selectedSpotId],
+    () => {
+      const activeId = selectedSpotId ?? hoveredSpotId;
+      return activeId ? filtered.find((s) => s.id === activeId) : null;
+    },
+    [filtered, hoveredSpotId, selectedSpotId],
   );
 
   const center = useMemo(() => {
@@ -159,7 +164,7 @@ export function MapScreen() {
     return '#ef4444';
   };
 
-  const spotImage = (s: SpotDto) => s.imageUrls?.[0] ?? '/src/imports/image-0.png';
+  const spotImage = (s: SpotDto) => s.imageUrls?.[0] ?? '';
   const fmtKm = (km: number | null | undefined) =>
     typeof km === 'number' && Number.isFinite(km) ? `${km.toFixed(2)}km` : '';
   const aqiDot = (aqiValue: number) => {
@@ -179,7 +184,7 @@ export function MapScreen() {
                 <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
                   <SlidersHorizontal className="w-5 h-5 text-white" />
                 </div>
-                <div className="text-xl font-semibold">フィルター / Bộ lọc</div>
+              <div className="text-xl font-semibold">フィルター</div>
               </div>
               <button className="p-2 rounded-full hover:bg-gray-100" onClick={() => setShowFilterModal(false)}>
                 <X className="w-5 h-5 text-gray-600" />
@@ -188,7 +193,7 @@ export function MapScreen() {
 
             <div className="px-6 py-6 space-y-6">
               <div>
-                <div className="text-sm font-semibold mb-2">地区 / Khu vực</div>
+                <div className="text-sm font-semibold mb-2">地区</div>
                 <select
                   value={selectedDistrict}
                   onChange={(e) => setSelectedDistrict(e.target.value)}
@@ -196,18 +201,18 @@ export function MapScreen() {
                 >
                   {districts.map((d) => (
                     <option key={d} value={d}>
-                      {d === 'all' ? 'すべての地区 / Tất cả quận' : d}
+                      {d === 'all' ? 'すべての地区' : districtLabelJa(d)}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <div className="text-sm font-semibold mb-2">スポーツ / Môn thể thao</div>
+                <div className="text-sm font-semibold mb-2">スポーツ</div>
                 <select value={sport} onChange={(e) => setSport(e.target.value)} className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm">
                   {sports.map((s) => (
                     <option key={s} value={s}>
-                      {s === 'all' ? 'すべて / Tất cả' : s}
+                      {s === 'all' ? 'すべて' : s}
                     </option>
                   ))}
                 </select>
@@ -215,7 +220,7 @@ export function MapScreen() {
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm font-semibold">距離 / Bán kính (từ vị trí bạn)</div>
+                  <div className="text-sm font-semibold">距離（現在地から）</div>
                   <div className="text-blue-600 font-semibold">{radiusKm} km</div>
                 </div>
                 <input
@@ -229,27 +234,27 @@ export function MapScreen() {
               </div>
 
               <div>
-                <div className="text-sm font-semibold mb-2">場所 / Loại địa điểm</div>
+                <div className="text-sm font-semibold mb-2">場所</div>
                 <div className="grid grid-cols-2 gap-3">
                   <label className="flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-4">
                     <input type="checkbox" checked={typeFilter.indoor} onChange={(e) => setTypeFilter((p) => ({ ...p, indoor: e.target.checked }))} />
-                    <span className="font-semibold">室内 / Trong nhà</span>
+                    <span className="font-semibold">室内</span>
                   </label>
                   <label className="flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-4">
                     <input type="checkbox" checked={typeFilter.outdoor} onChange={(e) => setTypeFilter((p) => ({ ...p, outdoor: e.target.checked }))} />
-                    <span className="font-semibold">屋外 / Ngoài trời</span>
+                    <span className="font-semibold">屋外</span>
                   </label>
                 </div>
               </div>
 
               <div>
-                <div className="text-sm font-semibold mb-2">評価 / Đánh giá tối thiểu</div>
+                <div className="text-sm font-semibold mb-2">評価（最低）</div>
                 <select
                   value={minRating}
                   onChange={(e) => setMinRating(Number(e.target.value))}
                   className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm"
                 >
-                  <option value={0}>すべて / Tất cả</option>
+                  <option value={0}>すべて</option>
                   <option value={3}>3.0+</option>
                   <option value={4}>4.0+</option>
                   <option value={4.5}>4.5+</option>
@@ -268,13 +273,13 @@ export function MapScreen() {
                   setMinRating(0);
                 }}
               >
-                Đặt lại
+                リセット
               </button>
               <button
                 className="flex-[1.4] rounded-2xl bg-blue-600 text-white py-4 font-semibold hover:bg-blue-700"
                 onClick={() => setShowFilterModal(false)}
               >
-                Hiển thị {filtered.length} kết quả
+                {filtered.length} 件を表示
               </button>
             </div>
           </div>
@@ -295,7 +300,7 @@ export function MapScreen() {
                 <SearchIcon className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <div className="text-xl font-semibold">Tìm kiếm / 検索</div>
+              <div className="text-xl font-semibold">検索</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -306,12 +311,12 @@ export function MapScreen() {
           </div>
 
           <div className="mt-4">
-            <div className="relative">
+                <div className="relative">
               <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Tìm tên địa điểm, khu vực... / 検索"
+                placeholder="場所名・エリアで検索"
                 className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-12 py-3 text-sm outline-none focus:border-blue-300"
               />
             </div>
@@ -326,7 +331,7 @@ export function MapScreen() {
               }`}
             >
               <span className="text-base">↗</span>
-              <span>Gần tôi</span>
+              <span>近い</span>
             </button>
             <button
               type="button"
@@ -336,7 +341,7 @@ export function MapScreen() {
               }`}
             >
               <Star className="w-4 h-4" />
-              <span>Đánh giá cao</span>
+              <span>高評価</span>
             </button>
             <button
               type="button"
@@ -349,7 +354,7 @@ export function MapScreen() {
               }}
             >
               <Wind className="w-4 h-4" />
-              <span>良いAQI / AQI tốt</span>
+              <span>AQI が良い</span>
             </button>
           </div>
 
@@ -362,12 +367,12 @@ export function MapScreen() {
               >
                 <span>
                   {sort === 'distance'
-                    ? '並び替え: 距離 / Khoảng cách'
+                    ? '並び替え: 距離'
                     : sort === 'rating'
-                      ? '並び替え: 評価 / Đánh giá'
+                      ? '並び替え: 評価'
                       : sort === 'aqi'
-                        ? '並び替え: AQI / AQI'
-                        : '並び替え: 名前 / Tên A-Z'}
+                        ? '並び替え: AQI'
+                        : '並び替え: 名前'}
                 </span>
                 <span className="text-gray-400">▾</span>
               </button>
@@ -375,10 +380,10 @@ export function MapScreen() {
                 <div className="absolute top-[54px] left-0 right-0 z-30 rounded-2xl border border-gray-200 bg-white shadow-xl overflow-hidden">
                   {(
                     [
-                      { id: 'distance', label: '並び替え: 距離 / Khoảng cách' },
-                      { id: 'rating', label: '並び替え: 評価 / Đánh giá' },
-                      { id: 'aqi', label: '並び替え: AQI / AQI' },
-                      { id: 'name', label: '並び替え: 名前 / Tên A-Z' },
+                      { id: 'distance', label: '並び替え: 距離' },
+                      { id: 'rating', label: '並び替え: 評価' },
+                      { id: 'aqi', label: '並び替え: AQI' },
+                      { id: 'name', label: '並び替え: 名前' },
                     ] as const
                   ).map((it) => (
                     <button
@@ -400,7 +405,7 @@ export function MapScreen() {
             <button
               type="button"
               className="w-12 h-12 rounded-2xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50"
-              aria-label="Filters"
+              aria-label="フィルター"
               onClick={() => {
                 setShowFilterModal(true);
               }}
@@ -409,7 +414,7 @@ export function MapScreen() {
             </button>
           </div>
 
-          <div className="mt-5 text-blue-600 font-semibold text-lg">{filtered.length} kết quả / 結果</div>
+          <div className="mt-5 text-blue-600 font-semibold text-lg">{filtered.length} 件</div>
         </div>
 
         <div className="flex-1 overflow-auto">
@@ -417,19 +422,25 @@ export function MapScreen() {
             <div key={s.id} className="px-5 pb-5 first:pt-5">
               <div
                 className={`rounded-3xl border shadow-sm bg-white overflow-hidden transition ${
-                  selectedSpotId === s.id ? 'border-blue-200 ring-2 ring-blue-100' : 'border-gray-100 hover:shadow-md'
+                  (selectedSpotId ?? hoveredSpotId) === s.id
+                    ? 'border-blue-200 ring-2 ring-blue-100'
+                    : 'border-gray-100 hover:shadow-md'
                 }`}
-                onMouseEnter={() => setSelectedSpotId(s.id)}
-                onMouseLeave={() => setSelectedSpotId(null)}
+                onMouseEnter={() => setHoveredSpotId(s.id)}
+                onMouseLeave={() => setHoveredSpotId((prev) => (prev === s.id ? null : prev))}
               >
                 <div className="flex gap-4 p-4">
                   <div className="relative">
-                    <img
-                      src={spotImage(s)}
-                      alt={s.name}
-                      className="h-28 w-28 rounded-2xl object-cover border border-gray-100"
-                      loading="lazy"
-                    />
+                    {spotImage(s) ? (
+                      <img
+                        src={spotImage(s)}
+                        alt={s.name}
+                        className="h-28 w-28 rounded-2xl object-cover border border-gray-100"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="h-28 w-28 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-100" />
+                    )}
                     <div className="absolute top-2 right-2 rounded-full bg-black/60 px-3 py-1 text-xs text-white">
                       {s.type === 'indoor' ? '室内' : '屋外'}
                     </div>
@@ -441,13 +452,26 @@ export function MapScreen() {
                     <div className="mt-3 flex flex-wrap gap-2">
                       {(s.sports ?? []).slice(0, 2).map((sp) => (
                         <span key={sp} className="rounded-full bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1 text-xs font-medium">
-                          {sp} / {sp}
+                          {sp}
                         </span>
                       ))}
                       {Array.isArray(s.sports) && s.sports.length > 2 ? (
                         <span className="rounded-full bg-gray-100 text-gray-700 px-3 py-1 text-xs font-semibold">+{s.sports.length - 2}</span>
                       ) : null}
                     </div>
+
+                    {Array.isArray(s.facilities) && s.facilities.length ? (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {s.facilities.slice(0, 3).map((f) => (
+                          <span key={f} className="rounded-full bg-gray-50 text-gray-700 border border-gray-100 px-3 py-1 text-xs">
+                            {f}
+                          </span>
+                        ))}
+                        {s.facilities.length > 3 ? (
+                          <span className="rounded-full bg-gray-100 text-gray-700 px-3 py-1 text-xs font-semibold">+{s.facilities.length - 3}</span>
+                        ) : null}
+                      </div>
+                    ) : null}
 
                     <div className="mt-4 flex items-center justify-between text-sm text-gray-700">
                       <div className="flex items-center gap-2 rounded-full bg-gray-50 px-3 py-2">
@@ -471,7 +495,7 @@ export function MapScreen() {
                     to={`/location/${s.id}`}
                     className="block w-full rounded-2xl bg-blue-600 text-white text-center py-4 text-base font-semibold hover:bg-blue-700"
                   >
-                    詳細を見る / Xem chi tiết
+                    詳細を見る
                   </Link>
                 </div>
               </div>
@@ -491,6 +515,7 @@ export function MapScreen() {
 
       <div className="flex-1 relative">
         <MapContainer center={center} zoom={12} className="h-full w-full">
+          <ClearSelectionOnMapClick onClear={() => setSelectedSpotId(null)} />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -501,10 +526,10 @@ export function MapScreen() {
               key={s.id}
               spot={s}
               aqi={aqi}
-              isSelected={selectedSpotId === s.id}
+              isSelected={(selectedSpotId ?? hoveredSpotId) === s.id}
               onSelect={() => setSelectedSpotId(s.id)}
-              onHover={() => setSelectedSpotId(s.id)}
-              onUnhover={() => {}}
+              onHover={() => setHoveredSpotId(s.id)}
+              onUnhover={() => setHoveredSpotId((prev) => (prev === s.id ? null : prev))}
               origin={coords ? { lat: coords.lat, lng: coords.lng } : null}
               markerColor={markerColor}
               fmtKm={fmtKm}
@@ -526,7 +551,7 @@ export function MapScreen() {
                 radius={8}
                 pathOptions={{ color: '#1d4ed8', weight: 2, fillColor: '#3b82f6', fillOpacity: 1 }}
               >
-                <Popup>あなたの位置 / Vị trí của bạn</Popup>
+                <Popup>現在地</Popup>
               </CircleMarker>
             </>
           ) : null}
@@ -534,6 +559,36 @@ export function MapScreen() {
       </div>
     </div>
   );
+}
+
+const HANOI_DISTRICTS: { key: string; ja: string }[] = [
+  { key: 'Ba Đình', ja: 'バーディン区' },
+  { key: 'Hoàn Kiếm', ja: 'ホアンキエム区' },
+  { key: 'Hai Bà Trưng', ja: 'ハイバーチュン区' },
+  { key: 'Đống Đa', ja: 'ドンダー区' },
+  { key: 'Cầu Giấy', ja: 'カウザイ区' },
+  { key: 'Tây Hồ', ja: 'タイホー区' },
+  { key: 'Thanh Xuân', ja: 'タインスアン区' },
+  { key: 'Hoàng Mai', ja: 'ホアンマイ区' },
+  { key: 'Long Biên', ja: 'ロンビエン区' },
+  { key: 'Hà Đông', ja: 'ハードン区' },
+  { key: 'Nam Từ Liêm', ja: 'ナムトゥーリエム区' },
+  { key: 'Bắc Từ Liêm', ja: 'バクトゥーリエム区' },
+  { key: 'Gia Lâm', ja: 'ザーラム県' },
+  { key: 'Đông Anh', ja: 'ドンアイン県' },
+  { key: 'Thanh Trì', ja: 'タインチー県' },
+  { key: 'Sóc Sơn', ja: 'ソックソン県' },
+];
+
+function districtLabelJa(key: string) {
+  return HANOI_DISTRICTS.find((d) => d.key === key)?.ja ?? key;
+}
+
+function ClearSelectionOnMapClick(props: { onClear: () => void }) {
+  useMapEvents({
+    click: () => props.onClear(),
+  });
+  return null;
 }
 
 function LocateMeButton(props: { lat: number; lng: number }) {
@@ -544,8 +599,8 @@ function LocateMeButton(props: { lat: number; lng: number }) {
         type="button"
         onClick={() => map.flyTo([props.lat, props.lng], Math.max(map.getZoom(), 14), { duration: 0.6 })}
         className="h-12 w-12 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 flex items-center justify-center"
-        aria-label="Locate me"
-        title="あなたの位置 / Vị trí của bạn"
+        aria-label="現在地へ"
+        title="現在地へ"
       >
         <LocateFixed className="w-5 h-5" />
       </button>
@@ -591,17 +646,22 @@ function MarkerWithPopup(props: {
       eventHandlers={{
         click: () => props.onSelect(),
         mouseover: () => props.onHover(),
+        mouseout: () => props.onUnhover(),
       }}
     >
       <Popup>
         <div className="w-64">
           <div className="flex gap-3">
-            <img
-              src={props.spotImage(s)}
-              alt={s.name}
-              className="h-16 w-20 rounded-lg object-cover border border-gray-100"
-              loading="lazy"
-            />
+            {props.spotImage(s) ? (
+              <img
+                src={props.spotImage(s)}
+                alt={s.name}
+                className="h-16 w-20 rounded-lg object-cover border border-gray-100"
+                loading="lazy"
+              />
+            ) : (
+              <div className="h-16 w-20 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-100" />
+            )}
             <div className="min-w-0">
               <div className="font-medium truncate">{s.name}</div>
               <div className="text-xs text-gray-600 line-clamp-2">{s.address}</div>
@@ -628,13 +688,13 @@ function MarkerWithPopup(props: {
                 );
               }}
             >
-              Chỉ đường / ナビ
+              ナビ
             </button>
             <Link
               className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-center text-xs font-semibold text-blue-700 hover:bg-gray-50"
               to={`/location/${s.id}`}
             >
-              詳細を見る / Xem chi tiết
+              詳細を見る
             </Link>
           </div>
         </div>

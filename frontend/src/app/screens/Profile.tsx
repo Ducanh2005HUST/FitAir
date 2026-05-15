@@ -16,7 +16,7 @@ export function Profile() {
       {/* Header */}
       <div className="mb-2">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">プロフィール</h1>
-        <p className="text-sm text-gray-500">Hồ sơ cá nhân</p>
+        <p className="text-sm text-gray-500">アカウント情報</p>
       </div>
 
       {/* 1. Public Card */}
@@ -53,7 +53,7 @@ export function Profile() {
 
           {/* Favorite Sports */}
           <div className="pt-6 border-t border-gray-100">
-            <h3 className="text-[15px] font-bold text-gray-900 mb-1">お気に入りのスポーツ / Môn thể thao yêu thích</h3>
+            <h3 className="text-[15px] font-bold text-gray-900 mb-1">お気に入りのスポーツ</h3>
             <div className="flex flex-wrap gap-2 mt-4">
               {favoriteSports.map((sport, index) => (
                 <span
@@ -71,7 +71,7 @@ export function Profile() {
       {/* 2. Private Card (Settings) */}
       <div className="bg-white rounded-[16px] border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-4 bg-gray-50/50 border-b border-gray-100">
-          <h3 className="text-[15px] font-bold text-gray-900">アカウント設定 / Cài đặt tài khoản</h3>
+          <h3 className="text-[15px] font-bold text-gray-900">アカウント設定</h3>
         </div>
 
         <div className="flex flex-col">
@@ -86,7 +86,7 @@ export function Profile() {
               </div>
               <div className="text-left">
                 <div className="text-[15px] font-medium text-gray-900">プロフィール編集</div>
-                <div className="text-[12px] text-gray-500">Chỉnh sửa thông tin cá nhân</div>
+                <div className="text-[12px] text-gray-500">プロフィール情報を編集します</div>
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -103,7 +103,7 @@ export function Profile() {
               </div>
               <div className="text-left">
                 <div className="text-[15px] font-medium text-gray-900">パスワード変更</div>
-                <div className="text-[12px] text-gray-500">Đổi mật khẩu</div>
+                <div className="text-[12px] text-gray-500">パスワードを変更します</div>
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -121,7 +121,6 @@ export function Profile() {
               </div>
               <div className="text-left">
                 <div className="text-[15px] font-medium text-red-600">ログアウト</div>
-                <div className="text-[12px] text-red-500/80">Đăng xuất</div>
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-red-300" />

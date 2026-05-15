@@ -7,7 +7,6 @@ export function NotFound() {
       <div className="text-center max-w-md">
         <div className="text-6xl mb-4">🔍</div>
         <h1 className="text-3xl mb-2">ページが見つかりません</h1>
-        <p className="text-gray-600 mb-6">Không tìm thấy trang</p>
         <p className="text-sm text-gray-500 mb-8">
           お探しのページは存在しないか、削除された可能性があります。
         </p>

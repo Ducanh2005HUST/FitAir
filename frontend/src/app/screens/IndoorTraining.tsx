@@ -15,11 +15,11 @@ export function IndoorTraining() {
   const [videoModal, setVideoModal] = useState<{ open: boolean; youtubeUrl?: string; title?: string }>({ open: false });
 
   const categories = [
-    { id: 'all', label: 'すべて', labelVi: 'Tất cả' },
-    { id: 'yoga', label: 'ヨガ', labelVi: 'Yoga' },
-    { id: 'stretch', label: 'ストレッチ', labelVi: 'Giãn cơ' },
-    { id: 'cardio', label: '有酸素', labelVi: 'Cardio' },
-    { id: 'strength', label: '筋トレ', labelVi: 'Tập cơ' },
+    { id: 'all', label: 'すべて' },
+    { id: 'yoga', label: 'ヨガ' },
+    { id: 'stretch', label: 'ストレッチ' },
+    { id: 'cardio', label: '有酸素' },
+    { id: 'strength', label: '筋トレ' },
   ];
 
   const pageSize = 40;
@@ -108,9 +108,6 @@ export function IndoorTraining() {
               <p className="text-sm text-orange-700">
                 現在の空気質が悪いため、屋外での運動は避けてください。
               </p>
-              <p className="text-xs text-orange-600 mt-1">
-                Chất lượng không khí xấu - Nên tập trong nhà
-              </p>
             </div>
           </div>
         </div>
@@ -130,7 +127,6 @@ export function IndoorTraining() {
               }`}
             >
               <div className="text-sm">{category.label}</div>
-              <div className="text-xs opacity-75">{category.labelVi}</div>
             </button>
           ))}
         </div>
@@ -138,14 +134,14 @@ export function IndoorTraining() {
 
       <div className="mb-4 flex items-center justify-between">
         <div className="text-sm text-gray-600">
-          {videos.length} videos
+          {videos.length} 本
         </div>
         <button
           onClick={handleRefreshLatest}
           disabled={syncing}
           className="rounded-xl bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-60"
         >
-          {syncing ? 'Loading…' : '最新を取得 / Load latest'}
+          {syncing ? '読み込み中…' : '最新を取得'}
         </button>
       </div>
 
@@ -158,7 +154,7 @@ export function IndoorTraining() {
               setVideoModal({
                 open: true,
                 youtubeUrl: video.youtubeUrl,
-                title: video.titleJp ?? video.titleVn ?? 'Video',
+                title: video.titleJp ?? '動画',
               })
             }
             className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100 cursor-pointer group"
@@ -182,11 +178,10 @@ export function IndoorTraining() {
             
             <div className="p-4">
               <h3 className="font-medium text-gray-900 mb-1">{video.titleJp}</h3>
-              <p className="text-sm text-gray-600 mb-2">{video.titleVn ?? ''}</p>
               
               <div className="flex items-center justify-between">
                 <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                  {video.category ?? 'General'}
+                  {video.category ?? '一般'}
                 </span>
               </div>
             </div>
@@ -201,17 +196,16 @@ export function IndoorTraining() {
             disabled={loading}
             className="rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm hover:bg-gray-50 disabled:opacity-60"
           >
-            {loading ? 'Loading…' : 'もっと見る / Load more'}
+            {loading ? '読み込み中…' : 'もっと見る'}
           </button>
         ) : (
-          <div className="text-xs text-gray-500">No more videos</div>
+          <div className="text-xs text-gray-500">これ以上はありません</div>
         )}
       </div>
 
       {/* Benefits Section */}
       <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl p-6 md:p-8">
         <h2 className="text-xl mb-4">室内トレーニングのメリット</h2>
-        <p className="text-sm text-gray-600 mb-4">Lợi ích của việc tập trong nhà</p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex items-start gap-3">
@@ -220,7 +214,6 @@ export function IndoorTraining() {
             </div>
             <div>
               <h3 className="font-medium mb-1">空気質の心配なし</h3>
-              <p className="text-sm text-gray-600">Không lo về chất lượng không khí</p>
             </div>
           </div>
           
@@ -230,7 +223,6 @@ export function IndoorTraining() {
             </div>
             <div>
               <h3 className="font-medium mb-1">天候に左右されない</h3>
-              <p className="text-sm text-gray-600">Không phụ thuộc thời tiết</p>
             </div>
           </div>
           
@@ -240,7 +232,6 @@ export function IndoorTraining() {
             </div>
             <div>
               <h3 className="font-medium mb-1">いつでもどこでも</h3>
-              <p className="text-sm text-gray-600">Luyện tập mọi lúc mọi nơi</p>
             </div>
           </div>
           
@@ -250,7 +241,6 @@ export function IndoorTraining() {
             </div>
             <div>
               <h3 className="font-medium mb-1">プライバシー確保</h3>
-              <p className="text-sm text-gray-600">Riêng tư và thoải mái</p>
             </div>
           </div>
         </div>

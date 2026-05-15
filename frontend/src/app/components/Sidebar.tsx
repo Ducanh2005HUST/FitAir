@@ -9,12 +9,12 @@ export function Sidebar() {
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
-    { path: '/', icon: Home, label: 'ダッシュボード', labelVi: 'Trang chủ' },
-    { path: '/search', icon: Search, label: '検索・マップ', labelVi: 'Tìm kiếm & Bản đồ' },
-    { path: '/indoor', icon: Dumbbell, label: '室内トレーニング', labelVi: 'Tập trong nhà' },
-    { path: '/schedule', icon: Calendar, label: 'スケジュール', labelVi: 'Lịch trình' },
-    { path: '/community', icon: Users, label: 'コミュニティ', labelVi: 'Cộng đồng' },
-    { path: '/profile', icon: User, label: 'プロフィール', labelVi: 'Hồ sơ' },
+    { path: '/', icon: Home, label: 'ダッシュボード' },
+    { path: '/search', icon: Search, label: '検索・マップ' },
+    { path: '/indoor', icon: Dumbbell, label: '室内トレーニング' },
+    { path: '/schedule', icon: Calendar, label: 'スケジュール' },
+    { path: '/community', icon: Users, label: 'コミュニティ' },
+    { path: '/profile', icon: User, label: 'プロフィール' },
   ];
 
   return (
@@ -40,10 +40,7 @@ export function Sidebar() {
                   }`}
                 >
                   <Icon className="w-5 h-5" />
-                  <div className="flex flex-col">
-                    <span className="text-sm">{item.label}</span>
-                    <span className="text-xs text-gray-500">{item.labelVi}</span>
-                  </div>
+                  <span className="text-sm">{item.label}</span>
                 </Link>
               </li>
             );

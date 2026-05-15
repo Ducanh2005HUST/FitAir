@@ -7,10 +7,10 @@ export function BottomNav() {
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
-    { path: '/', icon: Home, label: 'ホーム', labelVi: 'Trang chủ' },
-    { path: '/search', icon: Search, label: '検索', labelVi: 'Tìm kiếm' },
-    { path: '/community', icon: Users, label: 'コミュニティ', labelVi: 'Cộng đồng' },
-    { path: '/profile', icon: User, label: 'プロフィール', labelVi: 'Hồ sơ' },
+    { path: '/', icon: Home, label: 'ホーム' },
+    { path: '/search', icon: Search, label: '検索' },
+    { path: '/community', icon: Users, label: 'コミュニティ' },
+    { path: '/profile', icon: User, label: 'プロフィール' },
   ];
 
   return (

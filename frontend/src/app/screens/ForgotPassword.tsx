@@ -16,7 +16,7 @@ export function ForgotPassword() {
           <Wind className="w-8 h-8 text-white" strokeWidth={2.5} />
         </div>
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">パスワード再設定</h1>
-        <p className="mt-2 text-sm text-gray-600">Nhập email để nhận mã</p>
+        <p className="mt-2 text-sm text-gray-600">メールアドレスにコードを送信します</p>
       </div>
 
       <div className="w-full max-w-sm">
@@ -31,10 +31,10 @@ export function ForgotPassword() {
                 method: 'POST',
                 body: JSON.stringify({ email }),
               });
-              toast.success('送信しました', { description: 'Nếu email tồn tại, mã sẽ được gửi.' });
+              toast.success('送信しました', { description: 'メールが存在する場合、コードを送信します。' });
               navigate(`/reset-password?email=${encodeURIComponent(email)}`);
             } catch (err) {
-              toast.error(err instanceof Error ? err.message : 'Failed');
+              toast.error(err instanceof Error ? err.message : '失敗しました');
             } finally {
               setIsLoading(false);
             }
@@ -72,4 +72,3 @@ export function ForgotPassword() {
     </div>
   );
 }
-

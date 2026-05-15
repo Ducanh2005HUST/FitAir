@@ -123,7 +123,7 @@ export function Community() {
       const out = await apiClient.postComments(postId);
       setComments((p) => ({ ...p, [postId]: out }));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load comments');
+      toast.error(err instanceof Error ? err.message : 'コメントの読み込みに失敗しました');
     }
   };
 
@@ -133,7 +133,7 @@ export function Community() {
       const out = await apiClient.participants(postId);
       setParticipants(out);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load participants');
+      toast.error(err instanceof Error ? err.message : '参加者の読み込みに失敗しました');
     }
   };
 
@@ -143,7 +143,7 @@ export function Community() {
       const out = await apiClient.publicUser(userId);
       setPublicProfile(out);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load profile');
+      toast.error(err instanceof Error ? err.message : 'プロフィールの読み込みに失敗しました');
     }
   };
 
@@ -152,14 +152,13 @@ export function Community() {
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl md:text-3xl mb-1">コミュニティ</h1>
-          <p className="text-sm text-gray-600">Cộng đồng</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
           className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-white hover:bg-blue-700"
         >
           <Plus className="w-5 h-5" />
-          募集 / Đăng bài
+          募集
         </button>
       </div>
 
@@ -168,7 +167,7 @@ export function Community() {
           className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-blue-500"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
-          placeholder="検索 / Tìm kiếm…"
+          placeholder="検索…"
         />
         <button
           onClick={() => loadPosts(keyword)}
@@ -178,7 +177,7 @@ export function Community() {
         </button>
       </div>
 
-      {isLoading ? <div className="text-sm text-gray-600">Loading…</div> : null}
+      {isLoading ? <div className="text-sm text-gray-600">読み込み中…</div> : null}
 
       <div className="space-y-4">
         {posts.map((p) => {
@@ -290,7 +289,7 @@ export function Community() {
                     isJoined ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' : 'bg-blue-600 text-white hover:bg-blue-700'
                   }`}
                 >
-                  {isJoined ? '退出 / Rời' : '参加 / Tham gia'}
+                  {isJoined ? '退出' : '参加'}
                 </button>
               </div>
 
@@ -348,7 +347,7 @@ export function Community() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShowCreate(false)}>
           <div className="w-full max-w-xl rounded-3xl bg-white p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold">新しい募集 / Tạo bài mới</h2>
+              <h2 className="text-lg font-bold">新しい募集</h2>
               <button onClick={() => setShowCreate(false)} className="p-2 rounded-full hover:bg-gray-100">
                 <X className="w-5 h-5" />
               </button>
@@ -359,20 +358,20 @@ export function Community() {
                 onChange={(e) => setNewPost((p) => ({ ...p, content: e.target.value }))}
                 rows={4}
                 className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none"
-                placeholder="内容 / Nội dung…"
+                placeholder="内容…"
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input
                   value={newPost.sport}
                   onChange={(e) => setNewPost((p) => ({ ...p, sport: e.target.value }))}
                   className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none"
-                  placeholder="スポーツ / Môn thể thao"
+                  placeholder="スポーツ"
                 />
                 <input
                   value={newPost.time}
                   onChange={(e) => setNewPost((p) => ({ ...p, time: e.target.value }))}
                   className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none"
-                  placeholder="日時 / Thời gian"
+                  placeholder="日時"
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -381,7 +380,7 @@ export function Community() {
                   onChange={(e) => setNewPost((p) => ({ ...p, location: e.target.value }))}
                   className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none"
                 >
-                  <option value="">場所 / Địa điểm (optional)</option>
+                  <option value="">場所（任意）</option>
                   {spots.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.name}
@@ -423,7 +422,7 @@ export function Community() {
                 }}
                 className="w-full rounded-2xl bg-blue-600 py-3 text-white font-bold hover:bg-blue-700"
               >
-                投稿する / Đăng bài
+                投稿する
               </button>
             </div>
           </div>
@@ -434,7 +433,7 @@ export function Community() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setParticipantsOpenFor(null)}>
           <div className="w-full max-w-md rounded-3xl bg-white p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold">参加者 / Participants</h2>
+              <h2 className="text-lg font-bold">参加者</h2>
               <button onClick={() => setParticipantsOpenFor(null)} className="p-2 rounded-full hover:bg-gray-100">
                 <X className="w-5 h-5" />
               </button>
@@ -461,7 +460,7 @@ export function Community() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setProfileOpenFor(null)}>
           <div className="w-full max-w-md rounded-3xl bg-white p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold">ユーザー / User</h2>
+              <h2 className="text-lg font-bold">ユーザー</h2>
               <button onClick={() => setProfileOpenFor(null)} className="p-2 rounded-full hover:bg-gray-100">
                 <X className="w-5 h-5" />
               </button>

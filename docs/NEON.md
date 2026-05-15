@@ -1,20 +1,20 @@
-# Neon (Postgres) setup
+# Neon（Postgres）セットアップ
 
-## 1) Tạo database trên Neon
+## 1) Neon で DB を作成
 
-- Tạo Project + Database trên Neon
-- Lấy connection string dạng Postgres
+- Neon で Project + Database を作成
+- Postgres の接続文字列（connection string）を取得
 
-## 2) Set env cho backend
+## 2) Backend の環境変数を設定
 
-Tạo file `backend/.env` dựa theo `backend/.env.example` và set:
+`backend/.env.example` を元に `backend/.env` を作成して設定:
 
 ```bash
 DATABASE_URL="postgresql://...your-neon-conn-string...?sslmode=require"
 JWT_SECRET="..."
 ```
 
-Lưu ý: Neon thường yêu cầu `sslmode=require`. Nếu dùng URL có `-pooler` mà migrate bị lỗi P1001, hãy đổi sang “Direct connection” URL (không `-pooler`) để chạy migrate/seed.
+注意: Neon は通常 `sslmode=require` が必要です。`-pooler` の URL で migrate が P1001 になる場合は、Neon の “Direct connection”（`-pooler` なし）URL を使って migrate/seed を実行してください。
 
 ## 3) Migrate + seed
 
@@ -24,13 +24,13 @@ npm run prisma:migrate -w @fitair/backend
 npm run prisma:seed -w @fitair/backend
 ```
 
-## 4) Run thử
+## 4) 起動
 
 ```bash
 npm run start:dev -w @fitair/backend
 ```
 
-Test nhanh:
+動作確認:
 
 - `GET http://localhost:4000/health`
 - `GET http://localhost:4000/environment/aqi`
