@@ -450,7 +450,7 @@ export function Community() {
                   </div>
                 </button>
               ))}
-              {participants.length === 0 ? <div className="text-sm text-gray-600">No participants</div> : null}
+              {participants.length === 0 ? <div className="text-sm text-gray-600">参加者はいません</div> : null}
             </div>
           </div>
         </div>

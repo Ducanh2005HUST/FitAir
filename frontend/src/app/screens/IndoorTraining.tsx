@@ -10,7 +10,6 @@ export function IndoorTraining() {
   const [aqi, setAqi] = useState<number>(currentAQI.value);
   const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [videoModal, setVideoModal] = useState<{ open: boolean; youtubeUrl?: string; title?: string }>({ open: false });
 
@@ -62,24 +61,6 @@ export function IndoorTraining() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
 
-  const handleRefreshLatest = async () => {
-    setSyncing(true);
-    try {
-      await http('/videos/sync', {
-        method: 'POST',
-        body: JSON.stringify({
-          category: selectedCategory,
-          max: 40,
-        }),
-      });
-    } catch {
-      // ignore
-    } finally {
-      setSyncing(false);
-    }
-    await loadPage({ reset: true });
-  };
-
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 md:px-8 md:py-8">
       <VideoModal
@@ -91,7 +72,6 @@ export function IndoorTraining() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl mb-2">室内トレーニング</h1>
-        <p className="text-sm text-gray-600">Tập luyện trong nhà</p>
       </div>
 
       {/* AQI Warning */}
@@ -130,19 +110,6 @@ export function IndoorTraining() {
             </button>
           ))}
         </div>
-      </div>
-
-      <div className="mb-4 flex items-center justify-between">
-        <div className="text-sm text-gray-600">
-          {videos.length} 本
-        </div>
-        <button
-          onClick={handleRefreshLatest}
-          disabled={syncing}
-          className="rounded-xl bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-60"
-        >
-          {syncing ? '読み込み中…' : '最新を取得'}
-        </button>
       </div>
 
       {/* Video Grid */}

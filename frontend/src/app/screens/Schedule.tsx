@@ -149,7 +149,7 @@ export function Schedule() {
       setIsDialogOpen(false);
       setEditingEvent(null);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Save failed');
+      toast.error(err instanceof Error ? err.message : '保存に失敗しました');
     } finally {
       setIsSaving(false);
     }
@@ -170,7 +170,6 @@ export function Schedule() {
     <div className="max-w-7xl mx-auto px-4 py-6 md:px-8 md:py-8">
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl mb-2">トレーニングスケジュール</h1>
-        <p className="text-sm text-gray-600">Lịch tập luyện</p>
       </div>
 
       <div className="flex items-center justify-between mb-6 bg-white rounded-[16px] p-4 border border-gray-100 shadow-sm">
