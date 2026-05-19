@@ -20,12 +20,12 @@ function pm25ToUsAqi(pm25: number) {
 }
 
 function usAqiCategory(aqi: number) {
-  if (aqi <= 50) return 'Good';
-  if (aqi <= 100) return 'Moderate';
-  if (aqi <= 150) return 'Unhealthy for Sensitive Groups';
-  if (aqi <= 200) return 'Unhealthy';
-  if (aqi <= 300) return 'Very Unhealthy';
-  return 'Hazardous';
+  if (aqi <= 50) return '良好';
+  if (aqi <= 100) return '普通';
+  if (aqi <= 150) return '敏感な方は注意';
+  if (aqi <= 200) return '悪い';
+  if (aqi <= 300) return '非常に悪い';
+  return '危険';
 }
 
 @Injectable()
@@ -151,6 +151,7 @@ export class EnvironmentService {
       url.searchParams.set('lon', String(longitude));
       url.searchParams.set('appid', key);
       url.searchParams.set('units', 'metric');
+      url.searchParams.set('lang', 'ja');
 
       const res = await fetch(url.toString(), { signal: ctrl.signal });
       const data = (await res.json()) as any;
@@ -166,7 +167,7 @@ export class EnvironmentService {
         lng: longitude,
         tempC,
         humidity,
-        description,
+        description: description || undefined,
         updatedAt: new Date().toISOString(),
       };
     } catch {
