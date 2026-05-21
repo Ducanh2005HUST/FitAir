@@ -82,7 +82,7 @@ export class EnvironmentService {
         lat: latitude,
         lng: longitude,
         aqi: 75,
-        category: 'Moderate',
+        category: '普通',
         updatedAt: new Date().toISOString(),
       };
     }
@@ -120,7 +120,7 @@ export class EnvironmentService {
         lat: latitude,
         lng: longitude,
         aqi: 75,
-        category: 'Moderate',
+        category: '普通',
         updatedAt: new Date().toISOString(),
       };
     } finally {

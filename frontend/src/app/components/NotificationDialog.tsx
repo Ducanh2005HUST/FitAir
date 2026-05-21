@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { apiClient } from '../api/client';
 import type { NotificationDto } from '../api/types';
 import { ensurePushSubscription } from '../push/webPush';
+import { toast } from 'sonner';
 
 interface NotificationDialogProps {
   open: boolean;
@@ -106,6 +107,25 @@ function NotificationDialogInner({
               <div className="mt-2 font-medium text-gray-900">{selected.title}</div>
               <div className="mt-1 text-sm text-gray-700">{selected.message}</div>
               <div className="mt-2 text-xs text-gray-500">{new Date(selected.createdAt).toLocaleString()}</div>
+
+              {selected.type === 'friend_request' && (selected.data as any)?.requesterId ? (
+                <button
+                  className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm text-white hover:bg-blue-700"
+                  onClick={async () => {
+                    if (!token) return;
+                    try {
+                      await apiClient.friendAccept(token, String((selected.data as any).requesterId));
+                      toast.success('友達申請を承認しました');
+                      await apiClient.markNotificationRead(token, selected.id);
+                      setItems((prev) => prev.map((x) => (x.id === selected.id ? { ...x, isRead: true } : x)));
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : '失敗しました');
+                    }
+                  }}
+                >
+                  承認する
+                </button>
+              ) : null}
 
               {selected.data?.action?.path ? (
                 <Link

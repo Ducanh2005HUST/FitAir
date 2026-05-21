@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
 import { EnvironmentService } from '../environment/environment.service';
 import { MailService } from '../mail/mail.service';
+import { format } from 'date-fns';
 
 function parseTimeHHmm(time: string): { h: number; m: number } | null {
   const m = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
@@ -29,6 +31,7 @@ export class NotificationJobsService {
     private readonly push: PushService,
     private readonly env: EnvironmentService,
     private readonly mail: MailService,
+    private readonly config: ConfigService,
   ) {}
 
   // Every minute: send reminders for schedules happening now.
@@ -67,7 +70,8 @@ export class NotificationJobsService {
       });
       if (exists) continue;
 
-      const recommendIndoor = aqi.aqi > 100;
+      const threshold = Number(this.config.get<string>('AQI_INDOOR_THRESHOLD') ?? '100');
+      const recommendIndoor = aqi.aqi > (Number.isFinite(threshold) ? threshold : 100);
       const title = 'FitAir';
       const message = recommendIndoor
         ? `トレーニング時間です: ${s.title}. AQI ${aqi.aqi}（${aqi.category}）のため、室内トレーニングをおすすめします。`
@@ -112,6 +116,65 @@ export class NotificationJobsService {
         await this.mail.sendWorkoutReminder({
           to: s.user.email,
           title: s.title,
+          message: `${message}\n\nFitAir を開く: http://localhost:3000/?notificationId=${notification.id}`,
+        });
+      }
+    }
+  }
+
+  // Every 30 minutes: if AQI is bad, notify users once per day to prefer indoor training.
+  @Cron('*/30 * * * *')
+  async aqiIndoorAdvisory() {
+    const today = format(new Date(), 'yyyy-MM-dd');
+
+    const aqi = await this.env.aqi(String(21.0285), String(105.8542));
+    const threshold = Number(this.config.get<string>('AQI_INDOOR_THRESHOLD') ?? '100');
+    const th = Number.isFinite(threshold) ? threshold : 100;
+    if (aqi.aqi <= th) return;
+
+    const users = await this.prisma.user.findMany({
+      select: { id: true, email: true },
+      take: 2000,
+    });
+
+    for (const u of users) {
+      const exists = await this.prisma.aqiAdvisory.findUnique({
+        where: { userId_date: { userId: u.id, date: today } },
+      });
+      if (exists) continue;
+
+      const title = 'FitAir';
+      const message = `本日のAQIは ${aqi.aqi}（${aqi.category}）です。室内トレーニングをおすすめします。`;
+
+      const notification = await this.prisma.notification.create({
+        data: {
+          userId: u.id,
+          type: 'aqi_indoor_advisory',
+          title,
+          message,
+          data: {
+            aqi,
+            action: { label: '室内トレーニング', path: '/indoor' },
+          },
+        },
+      });
+
+      await this.prisma.aqiAdvisory.create({
+        data: { userId: u.id, date: today, aqi: aqi.aqi, category: aqi.category },
+      });
+
+      await this.push.sendToUser(u.id, {
+        title: notification.title,
+        body: notification.message,
+        url: `/?notificationId=${encodeURIComponent(notification.id)}`,
+        notificationId: notification.id,
+        actions: [{ action: 'open', title: '開く' }],
+      });
+
+      if (u.email) {
+        await this.mail.sendWorkoutReminder({
+          to: u.email,
+          title: '室内トレーニングのおすすめ',
           message: `${message}\n\nFitAir を開く: http://localhost:3000/?notificationId=${notification.id}`,
         });
       }

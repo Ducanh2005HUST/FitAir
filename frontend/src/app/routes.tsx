@@ -18,6 +18,7 @@ import { Chat } from "./screens/Chat";
 import { NotFound } from "./screens/NotFound";
 import { ForgotPassword } from "./screens/ForgotPassword";
 import { ResetPassword } from "./screens/ResetPassword";
+import { PublicProfile } from "./screens/PublicProfile";
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
 
@@ -51,6 +52,7 @@ export const router = createBrowserRouter([
       { path: "profile", Component: Profile },
       { path: "profile/edit", Component: EditProfile },
       { path: "profile/change-password", Component: ChangePassword },
+      { path: "users/:id", Component: PublicProfile },
       { path: "chat/:id", Component: Chat },
       { path: "*", Component: NotFound },
     ],

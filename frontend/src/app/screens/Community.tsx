@@ -52,6 +52,9 @@ export function Community() {
 
   const [profileOpenFor, setProfileOpenFor] = useState<string | null>(null);
   const [publicProfile, setPublicProfile] = useState<any | null>(null);
+  const [relationship, setRelationship] = useState<
+    'self' | 'none' | 'friends' | 'outgoing_pending' | 'incoming_pending' | null
+  >(null);
 
   const [newPost, setNewPost] = useState({
     content: '',
@@ -140,8 +143,12 @@ export function Community() {
   const openProfile = async (userId: string) => {
     setProfileOpenFor(userId);
     try {
-      const out = await apiClient.publicUser(userId);
+      const [out, rel] = await Promise.all([
+        apiClient.publicUser(userId),
+        token ? apiClient.friendRelationship(token, userId) : Promise.resolve({ status: 'none' as const }),
+      ]);
       setPublicProfile(out);
+      setRelationship(rel.status);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'プロフィールの読み込みに失敗しました');
     }
@@ -477,8 +484,128 @@ export function Community() {
               {publicProfile?.id === me?.id ? (
                 <div className="pt-3">
                   <Link className="text-blue-600 underline" to="/profile">
-                    Go to my profile
+                    自分のプロフィールへ
                   </Link>
+                </div>
+              ) : publicProfile?.id ? (
+                <div className="pt-3 space-y-2">
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-gray-50"
+                      onClick={() => navigate(`/users/${encodeURIComponent(publicProfile.id)}`)}
+                    >
+                      プロフィールを見る
+                    </button>
+                  </div>
+
+                  <div className="flex gap-2">
+                    {relationship === 'friends' ? (
+                      <>
+                        <button
+                          type="button"
+                          className="flex-1 rounded-xl bg-gray-100 px-4 py-3 text-sm font-semibold text-gray-700"
+                          disabled
+                        >
+                          友達
+                        </button>
+                        <button
+                          type="button"
+                          className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-gray-50"
+                          onClick={async () => {
+                            if (!token) return;
+                            try {
+                              await apiClient.friendRemove(token, publicProfile.id);
+                              setRelationship('none');
+                              toast.success('友達を解除しました');
+                            } catch (err) {
+                              toast.error(err instanceof Error ? err.message : '失敗しました');
+                            }
+                          }}
+                        >
+                          友達解除
+                        </button>
+                      </>
+                    ) : relationship === 'outgoing_pending' ? (
+                      <>
+                        <button
+                          type="button"
+                          className="flex-1 rounded-xl bg-gray-100 px-4 py-3 text-sm font-semibold text-gray-700"
+                          disabled
+                        >
+                          申請中
+                        </button>
+                        <button
+                          type="button"
+                          className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-gray-50"
+                          onClick={async () => {
+                            if (!token) return;
+                            try {
+                              await apiClient.friendCancelRequest(token, publicProfile.id);
+                              setRelationship('none');
+                              toast.success('申請を取り消しました');
+                            } catch (err) {
+                              toast.error(err instanceof Error ? err.message : '失敗しました');
+                            }
+                          }}
+                        >
+                          申請を取り消す
+                        </button>
+                      </>
+                    ) : relationship === 'incoming_pending' ? (
+                      <>
+                        <button
+                          type="button"
+                          className="flex-1 rounded-xl bg-blue-600 px-4 py-3 text-sm text-white font-semibold hover:bg-blue-700"
+                          onClick={async () => {
+                            if (!token) return;
+                            try {
+                              await apiClient.friendAccept(token, publicProfile.id);
+                              setRelationship('friends');
+                              toast.success('承認しました');
+                            } catch (err) {
+                              toast.error(err instanceof Error ? err.message : '失敗しました');
+                            }
+                          }}
+                        >
+                          承認
+                        </button>
+                        <button
+                          type="button"
+                          className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-gray-50"
+                          onClick={async () => {
+                            if (!token) return;
+                            try {
+                              await apiClient.friendReject(token, publicProfile.id);
+                              setRelationship('none');
+                              toast.success('削除しました');
+                            } catch (err) {
+                              toast.error(err instanceof Error ? err.message : '失敗しました');
+                            }
+                          }}
+                        >
+                          削除
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        className="flex-1 rounded-xl bg-blue-600 px-4 py-3 text-sm text-white font-semibold hover:bg-blue-700"
+                        onClick={async () => {
+                          if (!token) return;
+                          try {
+                            await apiClient.friendRequest(token, publicProfile.id);
+                            setRelationship('outgoing_pending');
+                            toast.success('友達申請を送信しました');
+                          } catch (err) {
+                            toast.error(err instanceof Error ? err.message : '失敗しました');
+                          }
+                        }}
+                      >
+                        友達追加
+                      </button>
+                    )}
+                  </div>
                 </div>
               ) : null}
             </div>
