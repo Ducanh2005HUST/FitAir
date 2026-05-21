@@ -43,8 +43,8 @@ export function Dashboard() {
       } catch {
         // fallback to mock
         if (cancelled) return;
-        setAqi({ aqi: currentAQI.value, category: 'mock' });
-        setWeather({ tempC: currentAQI.temperature, humidity: currentAQI.humidity, description: 'mock' });
+        setAqi({ aqi: currentAQI.value, category: currentAQI.statusJa });
+        setWeather({ tempC: currentAQI.temperature, humidity: currentAQI.humidity });
         setNearbyLocations([]);
       }
     })();
@@ -66,7 +66,7 @@ export function Dashboard() {
       <div className="mb-8">
         <AQIIndicator value={aqi?.aqi ?? currentAQI.value} size="large" />
         <div className="mt-3 text-sm text-gray-600">
-          <span className="font-medium">AQI</span>: {aqi?.category ?? '—'}
+          <span className="font-medium">空気質（AQI）</span>: {aqi?.category ?? '—'}
           {aqi?.updatedAt ? <span className="text-xs text-gray-500"> • {new Date(aqi.updatedAt).toLocaleString()}</span> : null}
         </div>
 

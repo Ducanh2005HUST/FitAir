@@ -15,6 +15,7 @@ import { GooglePlacesModule } from '../google-places/google-places.module';
 import { MailModule } from '../mail/mail.module';
 import { PushModule } from '../push/push.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { FriendsModule } from '../friends/friends.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     GooglePlacesModule,
     MailModule,
     PushModule,
+    FriendsModule,
   ],
 })
 export class AppModule {}

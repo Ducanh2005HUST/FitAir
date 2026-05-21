@@ -29,6 +29,8 @@ export function Schedule() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<ScheduleDto | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [dayDetailOpen, setDayDetailOpen] = useState(false);
+  const [dayDetailDate, setDayDetailDate] = useState<Date | null>(null);
 
   const [events, setEvents] = useState<ScheduleDto[]>([]);
 
@@ -112,6 +114,11 @@ export function Schedule() {
       note: event.note ?? '',
     });
     setIsDialogOpen(true);
+  };
+
+  const openDayDetail = (date: Date) => {
+    setDayDetailDate(date);
+    setDayDetailOpen(true);
   };
 
   const save = async () => {
@@ -256,13 +263,63 @@ export function Schedule() {
                       <div className="font-medium truncate">{e.time} {e.title}</div>
                     </button>
                   ))}
-                  {list.length > 3 ? <div className="text-[10px] text-gray-500">+{list.length - 3} more</div> : null}
+                  {list.length > 3 ? (
+                    <button
+                      type="button"
+                      className="text-[10px] text-blue-600 hover:underline"
+                      onClick={() => openDayDetail(day)}
+                    >
+                      +{list.length - 3} 件を表示
+                    </button>
+                  ) : null}
                 </div>
               </div>
             );
           })}
         </div>
       </div>
+
+      <Dialog open={dayDetailOpen} onOpenChange={setDayDetailOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {dayDetailDate ? format(dayDetailDate, 'yyyy年M月d日（E）', { locale: ja }) : '予定'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {dayDetailDate
+              ? (eventsByDate.get(format(dayDetailDate, 'yyyy-MM-dd')) ?? []).map((e) => (
+                  <div key={e.id} className="rounded-xl border border-gray-200 bg-white p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="font-semibold truncate">{e.time} {e.title}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{e.type}</div>
+                        {e.note ? <div className="text-xs text-gray-700 mt-2 whitespace-pre-wrap">{e.note}</div> : null}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => openEdit(e)}>
+                          編集
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => {
+                            void remove(e.id);
+                          }}
+                        >
+                          削除
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              : null}
+            {dayDetailDate && (eventsByDate.get(format(dayDetailDate, 'yyyy-MM-dd')) ?? []).length === 0 ? (
+              <div className="text-sm text-gray-600">予定はありません</div>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>

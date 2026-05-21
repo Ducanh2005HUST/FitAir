@@ -34,6 +34,43 @@ model User {
   notifications Notification[]
   pushSubscriptions PushSubscription[]
   passwordResets PasswordReset[]
+  friendRequestsSent FriendRequest[] @relation("friend_requester")
+  friendRequestsReceived FriendRequest[] @relation("friend_addressee")
+  aqiAdvisories AqiAdvisory[]
+}
+
+enum FriendRequestStatus {
+  pending
+  accepted
+}
+
+model FriendRequest {
+  id          String               @id @default(cuid())
+  requesterId String
+  addresseeId String
+  status      FriendRequestStatus  @default(pending)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  requester   User @relation("friend_requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee   User @relation("friend_addressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId, status])
+}
+
+model AqiAdvisory {
+  id        String   @id @default(cuid())
+  userId    String
+  date      String   // YYYY-MM-DD (local app timezone)
+  aqi       Int
+  category  String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([date])
 }
 
 model PasswordReset {

@@ -4,14 +4,19 @@ import { AQIIndicator } from '../components/AQIIndicator';
 import { currentAQI } from '../data/mockData';
 import { http } from '../api/http';
 import { VideoModal } from '../components/VideoModal';
+import { apiClient } from '../api/client';
+import { useUserLocation } from '../location/useUserLocation';
 
 export function IndoorTraining() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [aqi, setAqi] = useState<number>(currentAQI.value);
+  const [aqiCategory, setAqiCategory] = useState<string>(currentAQI.statusJa);
+  const [aqiUpdatedAt, setAqiUpdatedAt] = useState<string | undefined>(undefined);
   const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [videoModal, setVideoModal] = useState<{ open: boolean; youtubeUrl?: string; title?: string }>({ open: false });
+  const { coords } = useUserLocation();
 
   const categories = [
     { id: 'all', label: 'すべて' },
@@ -44,8 +49,12 @@ export function IndoorTraining() {
     let cancelled = false;
     (async () => {
       try {
-        const aqiOut = await http<{ aqi: number }>('/environment/aqi');
-        if (!cancelled) setAqi(aqiOut.aqi);
+        const aqiOut = await apiClient.aqi({ lat: coords?.lat, lng: coords?.lng });
+        if (!cancelled) {
+          setAqi(aqiOut.aqi);
+          setAqiCategory(aqiOut.category);
+          setAqiUpdatedAt(aqiOut.updatedAt);
+        }
       } catch {
         // ignore
       }
@@ -53,7 +62,7 @@ export function IndoorTraining() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [coords?.lat, coords?.lng]);
 
   useEffect(() => {
     // reset list when category changes
@@ -72,6 +81,22 @@ export function IndoorTraining() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl mb-2">室内トレーニング</h1>
+      </div>
+
+      <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-4">
+        <div className="flex items-start gap-3">
+          <AQIIndicator value={aqi} />
+          <div className="min-w-0">
+            <div className="font-semibold text-gray-900">現在の空気質（AQI）</div>
+            <div className="text-sm text-gray-700">
+              AQI {aqi}（{aqiCategory}）
+              {aqiUpdatedAt ? <span className="text-xs text-gray-500"> • {new Date(aqiUpdatedAt).toLocaleString()}</span> : null}
+            </div>
+            <div className="mt-1 text-sm text-gray-700">
+              {aqi > 100 ? '本日は室内トレーニングをおすすめします。' : '空気質は比較的良好です。'}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* AQI Warning */}

@@ -2,10 +2,14 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
+import { FriendsService } from '../friends/friends.service';
 
 @Injectable()
 export class SchedulesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly friends: FriendsService,
+  ) {}
 
   list(userId: string, month?: string, year?: string) {
     const m = month ? Number(month) : undefined;
@@ -28,10 +32,25 @@ export class SchedulesService {
     });
   }
 
-  create(userId: string, dto: CreateScheduleDto) {
-    return this.prisma.schedule.create({
+  async create(userId: string, dto: CreateScheduleDto) {
+    const schedule = await this.prisma.schedule.create({
       data: { userId, title: dto.title, type: dto.type, date: new Date(dto.date), time: dto.time, note: dto.note },
     });
+
+    const friendIds = await this.friends.acceptedFriendIds(userId);
+    if (friendIds.length) {
+      await this.prisma.notification.createMany({
+        data: friendIds.map((fid) => ({
+          userId: fid,
+          type: 'friend_schedule',
+          title: 'FitAir',
+          message: '友達がトレーニング予定を追加しました。',
+          data: { scheduleId: schedule.id, userId },
+        })),
+      });
+    }
+
+    return schedule;
   }
 
   async update(userId: string, id: string, dto: UpdateScheduleDto) {
@@ -59,4 +78,3 @@ export class SchedulesService {
     return { ok: true };
   }
 }
-

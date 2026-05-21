@@ -32,4 +32,10 @@ export class NotificationsController {
   runReminders() {
     return this.jobs.scheduleReminders().then(() => ({ ok: true }));
   }
+
+  // Dev helper: trigger AQI advisory job manually.
+  @Post('debug/run-aqi-advisory')
+  runAqiAdvisory() {
+    return this.jobs.aqiIndoorAdvisory().then(() => ({ ok: true }));
+  }
 }

@@ -43,7 +43,7 @@ Backend は SerpApi（優先）を使って現在地周辺のジム/公園を取
 - 最新動画の取得方法:
   - （推奨）SerpApi: `backend/.env` に `SERPAPI_API_KEY`（engine `youtube` を使用）
   - YouTube Data API: `backend/.env` に `YOUTUBE_API_KEY`
-- Frontend の「最新を取得」ボタンで `POST /videos/sync` を呼び出し、DB を更新します
+- 管理用 API `POST /videos/sync` を呼び出して DB を更新します
 
 ## Push notifications (Web Push)
 
@@ -68,8 +68,11 @@ npx web-push generate-vapid-keys
 cd /Users/mac/Downloads/FitAir
 
 npm run prisma:generate -w @fitair/backend
-# 初回 DB セットアップ:
-npm run prisma:migrate:init -w @fitair/backend
+# 初回 DB セットアップ（Neon は pooler URL だと migrate が止まる場合があるため、まず db push 推奨）:
+# NOTE: Prisma 実行時の `DATABASE_URL` は `-pooler` なし（Direct）を推奨
+cd backend
+npx prisma db push
+cd ..
 npm run prisma:seed -w @fitair/backend
 
 # 以前のデモデータを削除:

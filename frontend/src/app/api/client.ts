@@ -117,6 +117,30 @@ export const apiClient = {
   clearNotifications(token: string) {
     return http<{ ok: boolean; deleted: number }>('/notifications', { method: 'DELETE', token });
   },
+  friends(token: string) {
+    return http<any[]>('/friends', { token });
+  },
+  friendRelationship(token: string, userId: string) {
+    return http<{ status: 'self' | 'none' | 'friends' | 'outgoing_pending' | 'incoming_pending' }>(
+      `/friends/${encodeURIComponent(userId)}/relationship`,
+      { token },
+    );
+  },
+  friendRequest(token: string, userId: string) {
+    return http(`/friends/${encodeURIComponent(userId)}/request`, { method: 'POST', token });
+  },
+  friendAccept(token: string, userId: string) {
+    return http(`/friends/${encodeURIComponent(userId)}/accept`, { method: 'POST', token });
+  },
+  friendReject(token: string, userId: string) {
+    return http(`/friends/${encodeURIComponent(userId)}/reject`, { method: 'POST', token });
+  },
+  friendCancelRequest(token: string, userId: string) {
+    return http(`/friends/${encodeURIComponent(userId)}/request`, { method: 'DELETE', token });
+  },
+  friendRemove(token: string, userId: string) {
+    return http(`/friends/${encodeURIComponent(userId)}`, { method: 'DELETE', token });
+  },
   syncVideos(token: string | null, body: { category?: string; max?: number }) {
     // no auth for now; keep signature in case you later secure it
     return http('/videos/sync', { method: 'POST', body: JSON.stringify(body) });
