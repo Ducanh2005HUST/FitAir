@@ -76,36 +76,57 @@ export function PublicProfile() {
         ) : null}
       </div>
 
-      <div className="rounded-3xl border border-gray-200 bg-white p-6">
-        <div className="flex items-start gap-4">
-          <Avatar name={profile?.name ?? 'User'} url={profile?.avatarUrl} />
-          <div className="min-w-0 flex-1">
-            <div className="text-2xl font-bold truncate">{profile?.name ?? '—'}</div>
-            <div className="text-sm text-gray-600 truncate">{profile?.location ?? ''}</div>
-            {profile?.email && profile?.emailVisible ? (
-              <div className="mt-1 text-sm text-gray-600 truncate">{profile.email}</div>
-            ) : null}
-            <div className="mt-1 text-xs text-gray-500">
-              参加日: {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : '—'}
+      <div className="rounded-3xl border border-gray-200 bg-white overflow-hidden">
+        <div className="h-28 bg-gradient-to-r from-indigo-500 to-purple-500" />
+        <div className="-mt-14 px-6 pb-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="rounded-full border-4 border-white shadow-sm overflow-hidden">
+              <Avatar name={profile?.name ?? 'User'} url={profile?.avatarUrl} size={112} />
             </div>
-            <div className="mt-3 text-sm text-gray-700 whitespace-pre-wrap">{profile?.bio ?? ''}</div>
-            {Array.isArray(profile?.sports) && profile.sports.length ? (
-              <div className="mt-4">
-                <div className="text-sm font-semibold text-gray-900 mb-2">お気に入りのスポーツ</div>
-                <div className="flex flex-wrap gap-2">
-                  {profile.sports.map((s: any) => (
-                    <span
-                      key={s.sport}
-                      className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700"
-                    >
-                      {s.sport}
-                    </span>
-                  ))}
-                </div>
-              </div>
+          </div>
+
+          <div className="mt-3 text-center">
+            <div className="text-2xl font-bold text-gray-900">{profile?.name ?? '—'}</div>
+            <div className="mt-1 text-sm text-gray-600">{profile?.location ?? ''}</div>
+            {profile?.email && profile?.emailVisible ? (
+              <div className="mt-1 text-sm text-gray-600">{profile.email}</div>
             ) : null}
           </div>
-        </div>
+
+          <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 whitespace-pre-wrap">
+            {profile?.bio ?? ''}
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-purple-50 p-4 text-center">
+              <div className="text-2xl font-bold text-purple-600">
+                {profile?.createdAt ? new Date(profile.createdAt).getFullYear() : '—'}
+              </div>
+              <div className="text-xs text-gray-600">参加年</div>
+            </div>
+            <div className="rounded-2xl bg-green-50 p-4 text-center">
+              <div className="text-2xl font-bold text-green-600">
+                {Array.isArray(profile?.sports) ? profile.sports.length : 0}
+              </div>
+              <div className="text-xs text-gray-600">スポーツ</div>
+            </div>
+          </div>
+
+          {Array.isArray(profile?.sports) && profile.sports.length ? (
+            <div className="mt-5">
+              <div className="text-sm font-semibold text-gray-900 mb-2">好きなスポーツ</div>
+              <div className="flex flex-wrap gap-2">
+                {profile.sports.map((s: any) => (
+                  <span
+                    key={s.sport}
+                    className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700"
+                  >
+                    {s.sport}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
         {profile?.id && profile?.id !== me?.id ? (
           <div className="mt-5 flex gap-2">
@@ -208,6 +229,7 @@ export function PublicProfile() {
             )}
           </div>
         ) : null}
+        </div>
       </div>
     </div>
   );

@@ -59,6 +59,8 @@ export class IndoorService {
     params.set('videoEmbeddable', 'true');
     params.set('videoSyndicated', 'true');
     params.set('order', input.order ?? 'relevance');
+    params.set('relevanceLanguage', 'ja');
+    params.set('regionCode', 'JP');
     if (input.pageToken) params.set('pageToken', input.pageToken);
 
     const ctrl = new AbortController();
@@ -116,11 +118,11 @@ export class IndoorService {
     const max = input.max != null ? Math.max(1, Math.min(50, Math.floor(input.max))) : 40;
 
     const queriesByCategory: Record<string, string[]> = {
-      yoga: ['yoga beginner full body', 'yoga flow beginner'],
-      stretch: ['full body stretching 10 minutes', 'mobility routine'],
-      cardio: ['low impact cardio workout 20 minutes', 'cardio workout no equipment'],
-      strength: ['bodyweight strength workout full body', 'no equipment strength workout'],
-      all: ['home workout beginner 20 minutes'],
+      yoga: ['ヨガ 初心者', 'ヨガ 全身 ストレッチ'],
+      stretch: ['ストレッチ 全身 10分', '柔軟体操 体が硬い'],
+      cardio: ['有酸素運動 自宅 20分', '脂肪燃焼 有酸素 初心者'],
+      strength: ['筋トレ 自重 全身', '筋トレ 自宅 初心者'],
+      all: ['自宅トレーニング 初心者 全身'],
     };
 
     const categories =
@@ -141,8 +143,8 @@ export class IndoorService {
               searchQuery: query,
               sp,
               noCache: true,
-              hl: 'en',
-              gl: 'us',
+              hl: 'ja',
+              gl: 'jp',
             });
             if (!out.items.length) break;
             for (const it of out.items) {
