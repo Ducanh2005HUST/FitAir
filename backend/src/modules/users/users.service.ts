@@ -35,10 +35,63 @@ export class UsersService {
   async getPublicProfile(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      select: { id: true, name: true, avatarUrl: true, location: true, bio: true, createdAt: true },
+      select: {
+        id: true,
+        name: true,
+        avatarUrl: true,
+        location: true,
+        bio: true,
+        createdAt: true,
+        sports: { select: { sport: true } },
+      },
     });
     if (!user) throw new NotFoundException('User not found');
     return user;
   }
-}
 
+  async getProfileDetail(viewerId: string, id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        avatarUrl: true,
+        location: true,
+        bio: true,
+        createdAt: true,
+        sports: { select: { sport: true } },
+      },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    if (viewerId === id) return { ...user, emailVisible: true };
+
+    const accepted = await this.prisma.friendRequest.findFirst({
+      where: {
+        status: 'accepted',
+        OR: [
+          { requesterId: viewerId, addresseeId: id },
+          { requesterId: id, addresseeId: viewerId },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (!accepted) {
+      return {
+        id: user.id,
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+        location: user.location,
+        bio: user.bio,
+        createdAt: user.createdAt,
+        sports: user.sports,
+        email: null,
+        emailVisible: false,
+      };
+    }
+
+    return { ...user, emailVisible: true };
+  }
+}

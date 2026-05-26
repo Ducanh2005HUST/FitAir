@@ -148,4 +148,7 @@ export const apiClient = {
   publicUser(id: string) {
     return http<any>(`/users/${encodeURIComponent(id)}`);
   },
+  userDetail(token: string, id: string) {
+    return http<any>(`/users/${encodeURIComponent(id)}/detail`, { token });
+  },
 };

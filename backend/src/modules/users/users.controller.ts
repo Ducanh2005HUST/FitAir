@@ -24,5 +24,10 @@ export class UsersController {
   publicProfile(@Param('id') id: string) {
     return this.users.getPublicProfile(id);
   }
-}
 
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/detail')
+  detail(@CurrentUser() user: { userId: string }, @Param('id') id: string) {
+    return this.users.getProfileDetail(user.userId, id);
+  }
+}
