@@ -33,8 +33,8 @@ export class MailService {
     await tx.sendMail({
       from,
       to: input.to,
-      subject: 'FitAir - Password reset code',
-      text: `Your FitAir password reset code is: ${input.code}\nThis code expires in 10 minutes.`,
+      subject: 'FitAir - パスワード再設定コード',
+      text: `FitAir のパスワード再設定コード: ${input.code}\n有効期限: 10分`,
     });
     return { ok: true as const };
   }
@@ -49,7 +49,7 @@ export class MailService {
     await tx.sendMail({
       from,
       to: input.to,
-      subject: `FitAir - Workout reminder: ${input.title}`,
+      subject: `FitAir - トレーニング通知: ${input.title}`,
       text: input.message,
     });
     return { ok: true as const };

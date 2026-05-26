@@ -42,7 +42,7 @@ export function PublicProfile() {
     (async () => {
       try {
         const [p, rel] = await Promise.all([
-          apiClient.publicUser(id),
+          token ? apiClient.userDetail(token, id) : apiClient.publicUser(id),
           token ? apiClient.friendRelationship(token, id) : Promise.resolve({ status: 'none' as const }),
         ]);
         if (cancelled) return;
@@ -82,7 +82,28 @@ export function PublicProfile() {
           <div className="min-w-0 flex-1">
             <div className="text-2xl font-bold truncate">{profile?.name ?? '—'}</div>
             <div className="text-sm text-gray-600 truncate">{profile?.location ?? ''}</div>
+            {profile?.email && profile?.emailVisible ? (
+              <div className="mt-1 text-sm text-gray-600 truncate">{profile.email}</div>
+            ) : null}
+            <div className="mt-1 text-xs text-gray-500">
+              参加日: {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : '—'}
+            </div>
             <div className="mt-3 text-sm text-gray-700 whitespace-pre-wrap">{profile?.bio ?? ''}</div>
+            {Array.isArray(profile?.sports) && profile.sports.length ? (
+              <div className="mt-4">
+                <div className="text-sm font-semibold text-gray-900 mb-2">お気に入りのスポーツ</div>
+                <div className="flex flex-wrap gap-2">
+                  {profile.sports.map((s: any) => (
+                    <span
+                      key={s.sport}
+                      className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700"
+                    >
+                      {s.sport}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -191,4 +212,3 @@ export function PublicProfile() {
     </div>
   );
 }
-
