@@ -3,12 +3,16 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { FriendsService } from '../friends/friends.service';
+import { PushService } from '../push/push.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class CommunityService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly friends: FriendsService,
+    private readonly push: PushService,
+    private readonly mail: MailService,
   ) {}
 
   async list(keyword?: string, viewerUserId?: string) {
@@ -64,15 +68,42 @@ export class CommunityService {
 
     const friendIds = await this.friends.acceptedFriendIds(userId);
     if (friendIds.length) {
-      await this.prisma.notification.createMany({
-        data: friendIds.map((fid) => ({
-          userId: fid,
-          type: 'friend_post',
-          title: 'FitAir',
-          message: '友達がコミュニティに投稿しました。',
-          data: { postId: post.id, userId },
-        })),
+      const friends = await this.prisma.user.findMany({
+        where: { id: { in: friendIds } },
+        select: { id: true, email: true },
       });
+
+      for (const f of friends) {
+        const notification = await this.prisma.notification.create({
+          data: {
+            userId: f.id,
+            type: 'friend_post',
+            title: 'FitAir',
+            message: '友達が1件の投稿をしました。',
+            data: {
+              postId: post.id,
+              userId,
+              action: { label: '投稿を見る', path: `/community?scrollTo=${post.id}` },
+            },
+          },
+        });
+
+        await this.push.sendToUser(f.id, {
+          title: notification.title,
+          body: notification.message,
+          url: `/?notificationId=${encodeURIComponent(notification.id)}`,
+          notificationId: notification.id,
+          actions: [{ action: 'open', title: '開く' }],
+        });
+
+        if (f.email) {
+          await this.mail.sendWorkoutReminder({
+            to: f.email,
+            title: '友達の投稿',
+            message: `${notification.message}\n\nFitAir を開く: http://localhost:3000/?notificationId=${notification.id}`,
+          });
+        }
+      }
     }
 
     return post;

@@ -62,6 +62,11 @@ npx web-push generate-vapid-keys
 
 アプリ内の通知（ベル）から「プッシュ通知を有効化」を押してデバイス登録します。
 
+## AQI 室内推奨の通知（Push + Gmail）
+
+- デフォルト閾値: `AQI > 40` で「室内トレーニング推奨」を通知（1日1回/ユーザー）
+- 変更する場合は `backend/.env` に `AQI_INDOOR_THRESHOLD=40` のように設定します
+
 ## Backend 起動（NestJS）
 
 ```bash

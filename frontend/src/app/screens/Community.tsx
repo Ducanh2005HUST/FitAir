@@ -117,7 +117,7 @@ export function Community() {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setSearchParams({});
     }, 50);
-  }, [searchParams, setSearchParams]);
+  }, [posts.length, searchParams, setSearchParams]);
 
   const toggleComments = async (postId: string) => {
     setExpandedComments((p) => ({ ...p, [postId]: !p[postId] }));
@@ -141,17 +141,7 @@ export function Community() {
   };
 
   const openProfile = async (userId: string) => {
-    setProfileOpenFor(userId);
-    try {
-      const [out, rel] = await Promise.all([
-        apiClient.publicUser(userId),
-        token ? apiClient.friendRelationship(token, userId) : Promise.resolve({ status: 'none' as const }),
-      ]);
-      setPublicProfile(out);
-      setRelationship(rel.status);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'プロフィールの読み込みに失敗しました');
-    }
+    navigate(`/users/${encodeURIComponent(userId)}`);
   };
 
   return (
@@ -594,8 +584,8 @@ export function Community() {
                         onClick={async () => {
                           if (!token) return;
                           try {
-                            await apiClient.friendRequest(token, publicProfile.id);
-                            setRelationship('outgoing_pending');
+                            const out: any = await apiClient.friendRequest(token, publicProfile.id);
+                            setRelationship(out?.status === 'incoming_pending' ? 'incoming_pending' : 'outgoing_pending');
                             toast.success('友達申請を送信しました');
                           } catch (err) {
                             toast.error(err instanceof Error ? err.message : '失敗しました');

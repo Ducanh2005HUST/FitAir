@@ -3,12 +3,16 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { FriendsService } from '../friends/friends.service';
+import { PushService } from '../push/push.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class SchedulesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly friends: FriendsService,
+    private readonly push: PushService,
+    private readonly mail: MailService,
   ) {}
 
   list(userId: string, month?: string, year?: string) {
@@ -39,15 +43,38 @@ export class SchedulesService {
 
     const friendIds = await this.friends.acceptedFriendIds(userId);
     if (friendIds.length) {
-      await this.prisma.notification.createMany({
-        data: friendIds.map((fid) => ({
-          userId: fid,
-          type: 'friend_schedule',
-          title: 'FitAir',
-          message: '友達がトレーニング予定を追加しました。',
-          data: { scheduleId: schedule.id, userId },
-        })),
+      const friends = await this.prisma.user.findMany({
+        where: { id: { in: friendIds } },
+        select: { id: true, email: true },
       });
+
+      for (const f of friends) {
+        const notification = await this.prisma.notification.create({
+          data: {
+            userId: f.id,
+            type: 'friend_schedule',
+            title: 'FitAir',
+            message: '友達がトレーニング予定を追加しました。',
+            data: { scheduleId: schedule.id, userId },
+          },
+        });
+
+        await this.push.sendToUser(f.id, {
+          title: notification.title,
+          body: notification.message,
+          url: `/?notificationId=${encodeURIComponent(notification.id)}`,
+          notificationId: notification.id,
+          actions: [{ action: 'open', title: '開く' }],
+        });
+
+        if (f.email) {
+          await this.mail.sendWorkoutReminder({
+            to: f.email,
+            title: '友達のスケジュール',
+            message: `${notification.message}\n\nFitAir を開く: http://localhost:3000/?notificationId=${notification.id}`,
+          });
+        }
+      }
     }
 
     return schedule;

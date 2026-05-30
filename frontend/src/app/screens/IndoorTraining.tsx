@@ -26,6 +26,14 @@ export function IndoorTraining() {
     { id: 'strength', label: '筋トレ' },
   ];
 
+  const categoryLabel = (id?: string | null) => {
+    if (id === 'yoga') return 'ヨガ';
+    if (id === 'stretch') return 'ストレッチ';
+    if (id === 'cardio') return '有酸素';
+    if (id === 'strength') return '筋トレ';
+    return '一般';
+  };
+
   const pageSize = 40;
 
   const loadPage = async (opts: { reset: boolean }) => {
@@ -173,7 +181,7 @@ export function IndoorTraining() {
               
               <div className="flex items-center justify-between">
                 <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                  {video.category ?? '一般'}
+                  {categoryLabel(video.category)}
                 </span>
               </div>
             </div>

@@ -70,8 +70,8 @@ export class NotificationJobsService {
       });
       if (exists) continue;
 
-      const threshold = Number(this.config.get<string>('AQI_INDOOR_THRESHOLD') ?? '100');
-      const recommendIndoor = aqi.aqi > (Number.isFinite(threshold) ? threshold : 100);
+      const threshold = Number(this.config.get<string>('AQI_INDOOR_THRESHOLD') ?? '40');
+      const recommendIndoor = aqi.aqi > (Number.isFinite(threshold) ? threshold : 40);
       const title = 'FitAir';
       const message = recommendIndoor
         ? `トレーニング時間です: ${s.title}. AQI ${aqi.aqi}（${aqi.category}）のため、室内トレーニングをおすすめします。`
@@ -128,8 +128,8 @@ export class NotificationJobsService {
     const today = format(new Date(), 'yyyy-MM-dd');
 
     const aqi = await this.env.aqi(String(21.0285), String(105.8542));
-    const threshold = Number(this.config.get<string>('AQI_INDOOR_THRESHOLD') ?? '100');
-    const th = Number.isFinite(threshold) ? threshold : 100;
+    const threshold = Number(this.config.get<string>('AQI_INDOOR_THRESHOLD') ?? '40');
+    const th = Number.isFinite(threshold) ? threshold : 40;
     if (aqi.aqi <= th) return;
 
     const users = await this.prisma.user.findMany({
