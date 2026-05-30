@@ -79,8 +79,12 @@ export class CommunityService {
             userId: f.id,
             type: 'friend_post',
             title: 'FitAir',
-            message: '友達がコミュニティに投稿しました。',
-            data: { postId: post.id, userId },
+            message: '友達が1件の投稿をしました。',
+            data: {
+              postId: post.id,
+              userId,
+              action: { label: '投稿を見る', path: `/community?scrollTo=${post.id}` },
+            },
           },
         });
 

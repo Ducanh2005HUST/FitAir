@@ -5,7 +5,6 @@ import { useAuth } from '../auth/AuthContext';
 import { apiClient } from '../api/client';
 import type { NotificationDto } from '../api/types';
 import { ensurePushSubscription } from '../push/webPush';
-import { toast } from 'sonner';
 
 interface NotificationDialogProps {
   open: boolean;
@@ -67,6 +66,29 @@ function NotificationDialogInner({
 
   const unreadCount = useMemo(() => items.filter((i) => !i.isRead).length, [items]);
   const selected = useMemo(() => items.find((x) => x.id === selectedId) ?? null, [items, selectedId]);
+  const selectedAction = useMemo(() => {
+    if (!selected) return null;
+    const data = selected.data as any;
+    if (data?.action?.path) {
+      return {
+        path: String(data.action.path),
+        label: String(data.action.label ?? '開く'),
+      };
+    }
+    if (selected.type === 'friend_request' && data?.requesterId) {
+      return {
+        path: `/users/${encodeURIComponent(String(data.requesterId))}`,
+        label: 'プロフィールで確認',
+      };
+    }
+    if (selected.type === 'friend_post' && data?.postId) {
+      return {
+        path: `/community?scrollTo=${encodeURIComponent(String(data.postId))}`,
+        label: '投稿を見る',
+      };
+    }
+    return null;
+  }, [selected]);
 
   useEffect(() => {
     onUnreadCountChange?.(unreadCount);
@@ -108,32 +130,13 @@ function NotificationDialogInner({
               <div className="mt-1 text-sm text-gray-700">{selected.message}</div>
               <div className="mt-2 text-xs text-gray-500">{new Date(selected.createdAt).toLocaleString()}</div>
 
-              {selected.type === 'friend_request' && (selected.data as any)?.requesterId ? (
-                <button
-                  className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm text-white hover:bg-blue-700"
-                  onClick={async () => {
-                    if (!token) return;
-                    try {
-                      await apiClient.friendAccept(token, String((selected.data as any).requesterId));
-                      toast.success('友達申請を承認しました');
-                      await apiClient.markNotificationRead(token, selected.id);
-                      setItems((prev) => prev.map((x) => (x.id === selected.id ? { ...x, isRead: true } : x)));
-                    } catch (err) {
-                      toast.error(err instanceof Error ? err.message : '失敗しました');
-                    }
-                  }}
-                >
-                  承認する
-                </button>
-              ) : null}
-
-              {selected.data?.action?.path ? (
+              {selectedAction ? (
                 <Link
-                  to={selected.data.action.path}
+                  to={selectedAction.path}
                   onClick={onClose}
                   className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm text-white hover:bg-blue-700"
                 >
-                  {selected.data.action.label ?? '開く'}
+                  {selectedAction.label}
                 </Link>
               ) : null}
             </div>

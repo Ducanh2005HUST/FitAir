@@ -63,9 +63,7 @@ export class FriendsService {
       return { ok: true, status: 'pending' as const };
     }
     if (existing && existing.requesterId === targetUserId && existing.addresseeId === requesterId && existing.status === 'pending') {
-      // Auto-accept if the other side already requested.
-      await this.prisma.friendRequest.update({ where: { id: existing.id }, data: { status: 'accepted' } });
-      return { ok: true, status: 'accepted' as const };
+      return { ok: true, status: 'incoming_pending' as const };
     }
 
     await this.prisma.friendRequest.create({
@@ -78,7 +76,10 @@ export class FriendsService {
         type: 'friend_request',
         title: 'FitAir',
         message: '友達申請が届きました。',
-        data: { requesterId },
+        data: {
+          requesterId,
+          action: { label: 'プロフィールで確認', path: `/users/${requesterId}` },
+        },
       },
     });
 

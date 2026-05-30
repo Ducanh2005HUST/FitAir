@@ -15,6 +15,12 @@ export class IndoorController {
     });
   }
 
+  // Dev helper: force Japanese titles for existing rows.
+  @Post('normalize-titles')
+  normalizeTitles() {
+    return this.indoor.normalizeJapaneseTitles();
+  }
+
   @Get('youtube/search')
   youtubeSearch(
     @Query('query') query?: string,
