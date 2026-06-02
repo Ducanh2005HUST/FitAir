@@ -114,3 +114,19 @@ npm run dev
 ## Neon (Postgres)
 
 詳細: `docs/NEON.md`
+
+## Vercel Frontend Deploy
+
+Vercel では root project として import してください。`vercel.json` が frontend build を指定します。
+
+- Framework Preset: `Vite`
+- Root Directory: 空欄
+- Install Command: `npm ci`
+- Build Command: `npm run build -w @fitair/frontend`
+- Output Directory: `frontend/dist`
+
+Environment Variables:
+
+- `VITE_API_BASE_URL=https://fitair.onrender.com`
+
+Deploy 後、`/search` や `/users/:id` を直接開いても `vercel.json` の rewrite で SPA route として表示されます。

@@ -1,0 +1,12 @@
+{
+  "framework": "vite",
+  "installCommand": "npm ci --prefix=..",
+  "buildCommand": "npm run build -w @fitair/frontend --prefix=..",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
