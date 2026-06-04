@@ -66,6 +66,9 @@ npx web-push generate-vapid-keys
 
 - デフォルト閾値: `AQI > 40` で「室内トレーニング推奨」を通知（1日1回/ユーザー）
 - 変更する場合は `backend/.env` に `AQI_INDOOR_THRESHOLD=40` のように設定します
+- `/environment/aqi` がAQIデータを返すたびに、全ユーザーへアプリ通知・Push・Gmailを送信します
+- デフォルトでは `/environment/aqi` が呼ばれるたびに送信します: `AQI_ALERT_THROTTLE_MS=0`
+- 連続送信を制限したい場合は `AQI_ALERT_THROTTLE_MS=300000`（5分）のように設定します
 
 ## Backend 起動（NestJS）
 
