@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fitair-backend
+    ports:
+      - "${PORT:-4000}:4000"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: fitair-frontend
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    depends_on:
+      - backend
+    # Nếu bạn muốn kết nối database local, có thể thêm service postgres ở dưới
+    # và thay đổi DATABASE_URL trong .env trỏ về service postgres.
