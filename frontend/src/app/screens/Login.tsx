@@ -3,14 +3,33 @@ import { Link, useNavigate } from 'react-router';
 import { Mail, Lock, Eye, EyeOff, Wind } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../auth/AuthContext';
+import { useGoogleLogin } from '@react-oauth/google';
 
 export function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setIsLoading(true);
+      try {
+        await googleLogin(tokenResponse.access_token);
+        toast.success('ログインしました！');
+        navigate('/');
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Googleログインに失敗しました');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    onError: () => {
+      toast.error('Googleログインに失敗しました');
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,8 +152,9 @@ export function Login() {
           {/* Google Button */}
           <button
             type="button"
-            className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 rounded-2xl text-base font-semibold text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
-            onClick={() => toast.message('OAuth', { description: 'Google OAuth は後で実装します。' })}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 rounded-2xl text-base font-semibold text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            onClick={() => handleGoogleLogin()}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>

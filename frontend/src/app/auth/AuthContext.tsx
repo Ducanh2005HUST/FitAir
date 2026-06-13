@@ -17,6 +17,7 @@ type AuthContextValue = {
   me: Me | null;
   isBootstrapping: boolean;
   login(email: string, password: string): Promise<void>;
+  googleLogin(idToken: string): Promise<void>;
   register(name: string, email: string, password: string): Promise<void>;
   logout(): void;
   refreshMe(): Promise<void>;
@@ -76,6 +77,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await refreshMe();
   }, [refreshMe]);
 
+  const googleLogin = useCallback(async (accessToken: string) => {
+    const out = await http<{ token: string; user: { id: string; email: string; name: string } }>(
+      '/auth/google',
+      { method: 'POST', body: JSON.stringify({ accessToken }) },
+    );
+    setToken(out.token);
+    setTokenState(out.token);
+    await refreshMe();
+  }, [refreshMe]);
+
   const register = useCallback(async (name: string, email: string, password: string) => {
     const out = await http<{ token: string }>(
       '/auth/register',
@@ -93,8 +104,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ token, me, isBootstrapping, login, register, logout, refreshMe }),
-    [token, me, isBootstrapping, login, register, logout, refreshMe],
+    () => ({ token, me, isBootstrapping, login, googleLogin, register, logout, refreshMe }),
+    [token, me, isBootstrapping, login, googleLogin, register, logout, refreshMe],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

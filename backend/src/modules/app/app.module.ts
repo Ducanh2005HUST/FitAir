@@ -19,7 +19,7 @@ import { FriendsModule } from '../friends/friends.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '../.env' }),
     ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,

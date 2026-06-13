@@ -8,6 +8,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MailService } from '../mail/mail.service';
+import { GoogleLoginDto } from './dto/google-login.dto';
 
 @Injectable()
 export class AuthService {
@@ -36,6 +37,50 @@ export class AuthService {
     if (!user?.passwordHash) throw new UnauthorizedException('Invalid credentials');
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
+
+    const token = await this.jwt.signAsync({ sub: user.id });
+    return {
+      user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl },
+      token,
+    };
+  }
+
+  async googleLogin(dto: GoogleLoginDto) {
+    // Verify access_token by calling Google's userinfo endpoint
+    let googleUser: { email: string; name: string; picture?: string };
+    try {
+      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${dto.accessToken}` },
+      });
+      if (!res.ok) throw new Error('Invalid response');
+      googleUser = await res.json() as { email: string; name: string; picture?: string };
+    } catch {
+      throw new UnauthorizedException('Invalid Google access token');
+    }
+
+    if (!googleUser.email) {
+      throw new UnauthorizedException('Google account has no email');
+    }
+
+    const { email, name, picture } = googleUser;
+
+    let user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          name: name || 'Google User',
+          avatarUrl: picture,
+          passwordHash: null,
+        },
+      });
+    } else if (!user.avatarUrl && picture) {
+      // Update avatar if user doesn't have one
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { avatarUrl: picture },
+      });
+    }
 
     const token = await this.jwt.signAsync({ sub: user.id });
     return {
