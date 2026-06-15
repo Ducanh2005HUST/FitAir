@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, SpotType } from '@prisma/client';
+import { Prisma, SpotType, Spot } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SearchSpotsDto } from './dto/search-spots.dto';
 import { GooglePlacesService } from '../google-places/google-places.service';
@@ -45,6 +45,16 @@ const HANOI_DISTRICTS = [
   'Thanh Trì',
   'Sóc Sơn',
 ] as const;
+
+const SPOT_OVERRIDES: Record<string, Partial<Spot>> = {
+  // Thong Nhat Park - Fix incorrect SerpAPI/Google Places address & coordinates
+  'ChIJfyTf5o6rNTER6dKWJmY9GOY': {
+    lat: 21.0115,
+    lng: 105.8415,
+    address: 'Đường Lê Duẩn, Hai Bà Trưng, Hà Nội',
+    district: 'Hai Bà Trưng',
+  },
+};
 
 function extractHanoiDistrict(address: string): string | null {
   const a = address ?? '';
@@ -152,14 +162,20 @@ export class SpotsService {
             const imageUrl = r.thumbnail ?? r.serpapi_thumbnail;
             const district = extractHanoiDistrict(address);
 
+            const overrides = SPOT_OVERRIDES[id] || {};
+            const finalLat = overrides.lat ?? plat;
+            const finalLng = overrides.lng ?? plng;
+            const finalAddress = overrides.address ?? address;
+            const finalDistrict = overrides.district ?? district;
+
             await this.prisma.spot.upsert({
               where: { id },
               update: {
                 name,
-                address,
-                district: district ?? undefined,
-                lat: plat,
-                lng: plng,
+                address: finalAddress,
+                district: finalDistrict ?? undefined,
+                lat: finalLat,
+                lng: finalLng,
                 type: spotType,
                 hours: r.hours ?? undefined,
                 imageUrls: imageUrl ? [imageUrl] : undefined,
@@ -171,10 +187,10 @@ export class SpotsService {
               create: {
                 id,
                 name,
-                address,
-                district,
-                lat: plat,
-                lng: plng,
+                address: finalAddress,
+                district: finalDistrict,
+                lat: finalLat,
+                lng: finalLng,
                 type: spotType,
                 hours: r.hours ?? null,
                 facilities: defaultFacilities(spotType),
@@ -211,14 +227,20 @@ export class SpotsService {
             const spotType: SpotType = p.types?.includes('park') ? 'outdoor' : 'indoor';
             const district = extractHanoiDistrict(address);
 
+            const overrides = SPOT_OVERRIDES[p.id] || {};
+            const finalLat = overrides.lat ?? plat;
+            const finalLng = overrides.lng ?? plng;
+            const finalAddress = overrides.address ?? address;
+            const finalDistrict = overrides.district ?? district;
+
             await this.prisma.spot.upsert({
               where: { id: p.id },
               update: {
                 name,
-                address,
-                district: district ?? undefined,
-                lat: plat,
-                lng: plng,
+                address: finalAddress,
+                district: finalDistrict ?? undefined,
+                lat: finalLat,
+                lng: finalLng,
                 type: spotType,
                 facilities: defaultFacilities(spotType),
                 sports: defaultSports(spotType),
@@ -228,10 +250,10 @@ export class SpotsService {
               create: {
                 id: p.id,
                 name,
-                address,
-                district,
-                lat: plat,
-                lng: plng,
+                address: finalAddress,
+                district: finalDistrict,
+                lat: finalLat,
+                lng: finalLng,
                 type: spotType,
                 facilities: defaultFacilities(spotType),
                 sports: defaultSports(spotType),
