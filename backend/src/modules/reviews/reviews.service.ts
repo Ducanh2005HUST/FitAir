@@ -12,9 +12,21 @@ export class ReviewsService {
 
     if (dto.rating < 1 || dto.rating > 5) throw new BadRequestException('Invalid rating');
 
-    const review = await this.prisma.spotReview.create({
-      data: { spotId, userId, rating: dto.rating, comment: dto.comment },
+    const existingReview = await this.prisma.spotReview.findFirst({
+      where: { spotId, userId },
     });
+
+    let review;
+    if (existingReview) {
+      review = await this.prisma.spotReview.update({
+        where: { id: existingReview.id },
+        data: { rating: dto.rating, comment: dto.comment, createdAt: new Date() },
+      });
+    } else {
+      review = await this.prisma.spotReview.create({
+        data: { spotId, userId, rating: dto.rating, comment: dto.comment },
+      });
+    }
 
     const agg = await this.prisma.spotReview.aggregate({
       where: { spotId },
@@ -30,6 +42,14 @@ export class ReviewsService {
       },
     });
 
+    return review;
+  }
+
+  async findMine(spotId: string, userId: string) {
+    const review = await this.prisma.spotReview.findFirst({
+      where: { spotId, userId },
+    });
+    if (!review) throw new NotFoundException('Review not found');
     return review;
   }
 }

@@ -4,8 +4,10 @@ import { ArrowLeft, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { http } from '../api/http';
 import { spotToLocation } from '../mappers/location';
+import { getAqiForSpot } from '../utils/maps';
 import type { SpotDto } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
+import { useUserLocation } from '../location/useUserLocation';
 
 export function Review() {
   const { id } = useParams();
@@ -13,11 +15,14 @@ export function Review() {
   const { token } = useAuth();
   const [aqiValue, setAqiValue] = useState<number>(75);
   const [spot, setSpot] = useState<SpotDto | null>(null);
+  const { coords } = useUserLocation();
   
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -26,6 +31,24 @@ export function Review() {
       try {
         const aqiOut = await http<{ aqi: number }>('/environment/aqi');
         const spotOut = await http<SpotDto>(`/spots/${encodeURIComponent(id)}`);
+        
+        // Try to fetch existing review
+        if (token) {
+          try {
+            const myReview = await http<{ rating: number; comment?: string }>(
+              `/spots/${encodeURIComponent(id)}/reviews/me`,
+              { token }
+            );
+            if (!cancelled && myReview) {
+              setRating(myReview.rating);
+              setComment(myReview.comment || '');
+              setIsEditing(true);
+            }
+          } catch {
+            // No existing review found or other error, do nothing
+          }
+        }
+
         if (cancelled) return;
         setAqiValue(aqiOut.aqi);
         setSpot(spotOut);
@@ -37,12 +60,12 @@ export function Review() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, token]);
 
   const location = useMemo(() => {
     if (!spot) return null;
-    return spotToLocation(spot, aqiValue);
-  }, [spot, aqiValue]);
+    return spotToLocation(spot, getAqiForSpot(spot, aqiValue), coords);
+  }, [spot, aqiValue, coords]);
 
   if (!location) {
     return (
@@ -73,8 +96,8 @@ export function Review() {
         token,
         body: JSON.stringify({ rating, comment }),
       });
-      toast.success('レビューを投稿しました！');
-      navigate(`/location/${id}`);
+      toast.success(isEditing ? 'レビューを更新しました！' : 'レビューを投稿しました！');
+      navigate(-1);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '投稿に失敗しました');
     } finally {
@@ -93,7 +116,7 @@ export function Review() {
       </button>
 
       <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8">
-        <h1 className="text-2xl mb-2">レビューを書く</h1>
+        <h1 className="text-2xl mb-2">{isEditing ? 'レビューを編集する' : 'レビューを書く'}</h1>
 
         <div className="mb-6">
           <div className="flex items-center gap-3">
@@ -176,7 +199,7 @@ export function Review() {
               disabled={isLoading}
               className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
             >
-              {isLoading ? '投稿中…' : '投稿する'}
+              {isLoading ? (isEditing ? '更新中…' : '投稿中…') : (isEditing ? '更新する' : '投稿する')}
             </button>
           </div>
         </form>

@@ -138,52 +138,54 @@ export class SpotsService {
         : [];
 
       if (serpResults.length) {
-        for (const r of serpResults) {
-          const id = r.place_id ?? r.data_id ?? r.data_cid;
-          const plat = r.gps_coordinates?.latitude;
-          const plng = r.gps_coordinates?.longitude;
-          if (typeof id !== 'string' || typeof plat !== 'number' || typeof plng !== 'number') continue;
+        await Promise.all(
+          serpResults.map(async (r) => {
+            const id = r.place_id ?? r.data_id ?? r.data_cid;
+            const plat = r.gps_coordinates?.latitude;
+            const plng = r.gps_coordinates?.longitude;
+            if (typeof id !== 'string' || typeof plat !== 'number' || typeof plng !== 'number') return;
 
-          const name = r.title ?? 'Unknown';
-          const address = r.address ?? '';
-          const typeStr = `${r.type ?? ''} ${(r.types ?? []).join(' ')}`.toLowerCase();
-          const spotType: SpotType = typeStr.includes('park') ? 'outdoor' : 'indoor';
-          const imageUrl = r.thumbnail ?? r.serpapi_thumbnail;
-          const district = extractHanoiDistrict(address);
+            const name = r.title ?? 'Unknown';
+            const address = r.address ?? '';
+            const typeStr = `${r.type ?? ''} ${(r.types ?? []).join(' ')}`.toLowerCase();
+            const spotType: SpotType = typeStr.includes('park') ? 'outdoor' : 'indoor';
+            const imageUrl = r.thumbnail ?? r.serpapi_thumbnail;
+            const district = extractHanoiDistrict(address);
 
-          await this.prisma.spot.upsert({
-            where: { id },
-            update: {
-              name,
-              address,
-              district: district ?? undefined,
-              lat: plat,
-              lng: plng,
-              type: spotType,
-              hours: r.hours ?? undefined,
-              imageUrls: imageUrl ? [imageUrl] : undefined,
-              facilities: defaultFacilities(spotType),
-              sports: defaultSports(spotType),
-              source: 'serpapi',
-              sourceRefreshedAt: now,
-            },
-            create: {
-              id,
-              name,
-              address,
-              district,
-              lat: plat,
-              lng: plng,
-              type: spotType,
-              hours: r.hours ?? null,
-              facilities: defaultFacilities(spotType),
-              sports: defaultSports(spotType),
-              imageUrls: imageUrl ? [imageUrl] : [],
-              source: 'serpapi',
-              sourceRefreshedAt: now,
-            },
-          });
-        }
+            await this.prisma.spot.upsert({
+              where: { id },
+              update: {
+                name,
+                address,
+                district: district ?? undefined,
+                lat: plat,
+                lng: plng,
+                type: spotType,
+                hours: r.hours ?? undefined,
+                imageUrls: imageUrl ? [imageUrl] : undefined,
+                facilities: defaultFacilities(spotType),
+                sports: defaultSports(spotType),
+                source: 'serpapi',
+                sourceRefreshedAt: now,
+              },
+              create: {
+                id,
+                name,
+                address,
+                district,
+                lat: plat,
+                lng: plng,
+                type: spotType,
+                hours: r.hours ?? null,
+                facilities: defaultFacilities(spotType),
+                sports: defaultSports(spotType),
+                imageUrls: imageUrl ? [imageUrl] : [],
+                source: 'serpapi',
+                sourceRefreshedAt: now,
+              },
+            });
+          }),
+        );
       } else {
         // Fallback to official Google Places if SerpApi isn't configured/available.
         const includedTypes: string[] = [];
@@ -198,46 +200,48 @@ export class SpotsService {
           maxResultCount: 20,
         });
 
-        for (const p of places) {
-          const name = p.displayName?.text ?? 'Unknown';
-          const address = p.formattedAddress ?? '';
-          const plat = p.location?.latitude;
-          const plng = p.location?.longitude;
-          if (typeof plat !== 'number' || typeof plng !== 'number') continue;
+        await Promise.all(
+          places.map(async (p) => {
+            const name = p.displayName?.text ?? 'Unknown';
+            const address = p.formattedAddress ?? '';
+            const plat = p.location?.latitude;
+            const plng = p.location?.longitude;
+            if (typeof plat !== 'number' || typeof plng !== 'number') return;
 
-          const spotType: SpotType = p.types?.includes('park') ? 'outdoor' : 'indoor';
-          const district = extractHanoiDistrict(address);
+            const spotType: SpotType = p.types?.includes('park') ? 'outdoor' : 'indoor';
+            const district = extractHanoiDistrict(address);
 
-          await this.prisma.spot.upsert({
-            where: { id: p.id },
-            update: {
-              name,
-              address,
-              district: district ?? undefined,
-              lat: plat,
-              lng: plng,
-              type: spotType,
-              facilities: defaultFacilities(spotType),
-              sports: defaultSports(spotType),
-              source: 'google',
-              sourceRefreshedAt: new Date(),
-            },
-            create: {
-              id: p.id,
-              name,
-              address,
-              district,
-              lat: plat,
-              lng: plng,
-              type: spotType,
-              facilities: defaultFacilities(spotType),
-              sports: defaultSports(spotType),
-              imageUrls: [],
-              source: 'google',
-              sourceRefreshedAt: new Date(),
-            },
-          });
-        }
+            await this.prisma.spot.upsert({
+              where: { id: p.id },
+              update: {
+                name,
+                address,
+                district: district ?? undefined,
+                lat: plat,
+                lng: plng,
+                type: spotType,
+                facilities: defaultFacilities(spotType),
+                sports: defaultSports(spotType),
+                source: 'google',
+                sourceRefreshedAt: new Date(),
+              },
+              create: {
+                id: p.id,
+                name,
+                address,
+                district,
+                lat: plat,
+                lng: plng,
+                type: spotType,
+                facilities: defaultFacilities(spotType),
+                sports: defaultSports(spotType),
+                imageUrls: [],
+                source: 'google',
+                sourceRefreshedAt: new Date(),
+              },
+            });
+          }),
+        );
       }
     }
 

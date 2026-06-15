@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Param, Post, UseGuards, Get } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -16,6 +16,15 @@ export class ReviewsController {
     @Body() dto: CreateReviewDto,
   ) {
     return this.reviews.create(spotId, user.userId, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  findMine(
+    @Param('spotId') spotId: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    return this.reviews.findMine(spotId, user.userId);
   }
 }
 

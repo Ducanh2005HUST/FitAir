@@ -35,9 +35,7 @@ export async function http<T>(
   const cacheKey = init?.token ? `${url}::token:${init.token}` : url;
   const canCache =
     method === 'GET' &&
-    !path.startsWith('/notifications') &&
-    !path.startsWith('/push') &&
-    !path.startsWith('/auth');
+    path.startsWith('/environment');
 
   if (canCache) {
     const cached = getCache.get(cacheKey);

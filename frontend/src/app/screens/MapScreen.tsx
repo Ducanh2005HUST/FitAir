@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, CircleMarker, Popup, useMap, useMapEvents } fr
 import { apiClient } from '../api/client';
 import type { SpotDto } from '../api/types';
 import { useUserLocation } from '../location/useUserLocation';
-import { googleMapsDirectionsUrl } from '../utils/maps';
+import { googleMapsDirectionsUrl, getAqiForSpot } from '../utils/maps';
 import type * as L from 'leaflet';
 
 function toYoutubeEmbed(url: string) {
@@ -475,8 +475,8 @@ export function MapScreen() {
 
                     <div className="mt-4 flex items-center justify-between text-sm text-gray-700">
                       <div className="flex items-center gap-2 rounded-full bg-gray-50 px-3 py-2">
-                        <span className={`w-2.5 h-2.5 rounded-full ${aqiDot(aqi)}`} />
-                        <span className="font-semibold">AQI {aqi}</span>
+                        <span className={`w-2.5 h-2.5 rounded-full ${aqiDot(getAqiForSpot(s, aqi))}`} />
+                        <span className="font-semibold">AQI {getAqiForSpot(s, aqi)}</span>
                       </div>
                       <div className="flex items-center gap-2 rounded-full bg-gray-50 px-3 py-2">
                         <Star className="w-4 h-4 text-orange-500 fill-orange-500" />
@@ -525,7 +525,7 @@ export function MapScreen() {
             <MarkerWithPopup
               key={s.id}
               spot={s}
-              aqi={aqi}
+              aqi={getAqiForSpot(s, aqi)}
               isSelected={(selectedSpotId ?? hoveredSpotId) === s.id}
               onSelect={() => setSelectedSpotId(s.id)}
               onHover={() => setHoveredSpotId(s.id)}
@@ -556,6 +556,44 @@ export function MapScreen() {
             </>
           ) : null}
         </MapContainer>
+
+        {/* AQI Legend */}
+        <div className="absolute right-6 bottom-6 z-[400] w-[200px] bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-5 border border-white">
+          <div className="flex items-center gap-2 mb-4">
+            <Wind className="w-5 h-5 text-blue-600" />
+            <span className="font-bold text-gray-800 text-[15px]">空気質</span>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 rounded-full bg-[#22c55e] shrink-0 shadow-inner" />
+              <div>
+                <div className="font-bold text-gray-800 text-sm">良好</div>
+                <div className="text-xs text-gray-500 mt-0.5 font-medium">0-50 AQI</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 rounded-full bg-[#eab308] shrink-0 shadow-inner" />
+              <div>
+                <div className="font-bold text-gray-800 text-sm">普通</div>
+                <div className="text-xs text-gray-500 mt-0.5 font-medium">51-100 AQI</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 rounded-full bg-[#f97316] shrink-0 shadow-inner" />
+              <div>
+                <div className="font-bold text-gray-800 text-sm">悪い</div>
+                <div className="text-xs text-gray-500 mt-0.5 font-medium">101-150 AQI</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 rounded-full bg-[#ef4444] shrink-0 shadow-inner" />
+              <div>
+                <div className="font-bold text-gray-800 text-sm">危険</div>
+                <div className="text-xs text-gray-500 mt-0.5 font-medium">150+ AQI</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -594,11 +632,11 @@ function ClearSelectionOnMapClick(props: { onClear: () => void }) {
 function LocateMeButton(props: { lat: number; lng: number }) {
   const map = useMap();
   return (
-    <div className="absolute right-5 bottom-6 z-[500]">
+    <div className="absolute right-12 bottom-10 z-[500]">
       <button
         type="button"
         onClick={() => map.flyTo([props.lat, props.lng], Math.max(map.getZoom(), 14), { duration: 0.6 })}
-        className="h-12 w-12 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 flex items-center justify-center"
+        className="h-12 w-12 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 flex items-center justify-center transition-transform hover:scale-105"
         aria-label="現在地へ"
         title="現在地へ"
       >

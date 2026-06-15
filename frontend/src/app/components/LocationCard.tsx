@@ -31,7 +31,7 @@ export function LocationCard({ location }: LocationCardProps) {
         <div className="flex items-center justify-between text-sm mb-3">
           <div className="flex items-center gap-1 text-yellow-600">
             <Star className="w-4 h-4 fill-current" />
-            <span>{location.rating}</span>
+            <span>{Number(location.rating || 0).toFixed(1)}</span>
           </div>
           
           <div className="flex items-center gap-1 text-gray-600">

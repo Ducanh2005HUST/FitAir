@@ -118,6 +118,7 @@ model Spot {
   reviews     SpotReview[]
 
   @@index([source, sourceRefreshedAt])
+  @@index([lat, lng])
 }
 
 model SpotReview {

@@ -234,6 +234,23 @@ export function Community() {
                       try {
                         const out = await apiClient.likePost(token, p.id);
                         setLiked((prev) => ({ ...prev, [p.id]: out.liked }));
+                        if (isLiked !== out.liked) {
+                          setPosts((prevPosts) =>
+                            prevPosts.map((post) =>
+                              post.id === p.id
+                                ? {
+                                    ...post,
+                                    _count: {
+                                      ...post._count,
+                                      likes: Math.max(0, (post._count?.likes ?? 0) + (out.liked ? 1 : -1)),
+                                      participants: post._count?.participants ?? 0,
+                                      comments: post._count?.comments ?? 0,
+                                    },
+                                  }
+                                : post
+                            )
+                          );
+                        }
                       } catch (err) {
                         toast.error(err instanceof Error ? err.message : 'Like failed');
                       }
@@ -305,7 +322,24 @@ export function Community() {
                     </div>
                   ))}
                   </div>
-                  <div className="mt-3 flex gap-2">
+                  <form
+                    className="mt-3 flex gap-2"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (!token) return;
+                      const content = (newComment[p.id] ?? '').trim();
+                      if (!content) return;
+                      try {
+                        await apiClient.createComment(token, p.id, content);
+                        setNewComment((prev) => ({ ...prev, [p.id]: '' }));
+                        const out = await apiClient.postComments(p.id);
+                        setComments((prev) => ({ ...prev, [p.id]: out }));
+                        await loadPosts(keyword);
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : 'Comment failed');
+                      }
+                    }}
+                  >
                     <input
                       value={newComment[p.id] ?? ''}
                       onChange={(e) => setNewComment((prev) => ({ ...prev, [p.id]: e.target.value }))}
@@ -313,26 +347,12 @@ export function Community() {
                       placeholder="コメント…"
                     />
                     <button
-                      type="button"
-                      onClick={async () => {
-                        if (!token) return;
-                        const content = (newComment[p.id] ?? '').trim();
-                        if (!content) return;
-                        try {
-                          await apiClient.createComment(token, p.id, content);
-                          setNewComment((prev) => ({ ...prev, [p.id]: '' }));
-                          const out = await apiClient.postComments(p.id);
-                          setComments((prev) => ({ ...prev, [p.id]: out }));
-                          await loadPosts(keyword);
-                        } catch (err) {
-                          toast.error(err instanceof Error ? err.message : 'Comment failed');
-                        }
-                      }}
+                      type="submit"
                       className="rounded-lg bg-blue-600 px-3 py-2 text-white hover:bg-blue-700"
                     >
                       送信
                     </button>
-                  </div>
+                  </form>
                 </div>
               ) : null}
             </div>

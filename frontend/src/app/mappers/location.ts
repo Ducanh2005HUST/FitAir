@@ -1,10 +1,20 @@
 import type { Location } from '../data/mockData';
 import type { SpotDto } from '../api/types';
+import { haversineKm } from '../utils/maps';
 
-export function spotToLocation(spot: SpotDto, aqiValue: number): Location {
+export function spotToLocation(
+  spot: SpotDto,
+  aqiValue: number,
+  coords?: { lat: number; lng: number } | null
+): Location {
   const image = spot.imageUrls?.[0] ?? '';
   const indoor = spot.type === 'indoor';
-  const distanceKm = typeof spot.distanceKm === 'number' ? Number(spot.distanceKm.toFixed(2)) : 0;
+  let distanceKm = typeof spot.distanceKm === 'number' ? Number(spot.distanceKm.toFixed(2)) : 0;
+  
+  if (!distanceKm && coords && typeof spot.lat === 'number' && typeof spot.lng === 'number') {
+    distanceKm = Number(haversineKm(coords.lat, coords.lng, spot.lat, spot.lng).toFixed(2));
+  }
+
   return {
     id: spot.id,
     name: spot.name,

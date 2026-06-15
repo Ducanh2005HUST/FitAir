@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { http } from '../api/http';
 import { spotToLocation } from '../mappers/location';
 import type { SpotDto } from '../api/types';
-import { googleMapsDirectionsUrl } from '../utils/maps';
+import { googleMapsDirectionsUrl, getAqiForSpot } from '../utils/maps';
 import { useUserLocation } from '../location/useUserLocation';
 
 export function LocationDetail() {
@@ -45,8 +45,8 @@ export function LocationDetail() {
 
   const location = useMemo(() => {
     if (!spot) return null;
-    return spotToLocation(spot, aqiValue);
-  }, [spot, aqiValue]);
+    return spotToLocation(spot, getAqiForSpot(spot, aqiValue), coords);
+  }, [spot, aqiValue, coords]);
 
   if (!location) {
     return (
@@ -109,7 +109,7 @@ export function LocationDetail() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1 text-yellow-600">
               <Star className="w-5 h-5 fill-current" />
-              <span className="text-lg">{location.rating}</span>
+              <span className="text-lg">{Number(location.rating).toFixed(1)}</span>
               <span className="text-sm text-gray-500">({reviews.length}件のレビュー)</span>
             </div>
             

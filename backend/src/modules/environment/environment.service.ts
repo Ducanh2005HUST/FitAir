@@ -30,11 +30,21 @@ function usAqiCategory(aqi: number) {
 
 @Injectable()
 export class EnvironmentService {
+  private readonly aqiCache = new Map<string, { data: any; expiresAt: number }>();
+  private readonly weatherCache = new Map<string, { data: any; expiresAt: number }>();
+  private readonly CACHE_TTL_MS = 10 * 60 * 1000; // 10 mins
+
   constructor(private readonly config: ConfigService) {}
 
   async aqi(lat?: string, lng?: string) {
     const latitude = lat ? Number(lat) : 21.0285;
     const longitude = lng ? Number(lng) : 105.8542;
+
+    const cacheKey = `${latitude.toFixed(3)},${longitude.toFixed(3)}`;
+    const cached = this.aqiCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.data;
+    }
 
     const iqairKey = this.config.get<string>('IQAIR_API_KEY') ?? '';
     if (iqairKey) {
@@ -54,7 +64,7 @@ export class EnvironmentService {
         const aqicn = Number(pollution?.aqicn ?? NaN);
         if (!Number.isFinite(aqius)) throw new Error('IQAir: missing aqius');
 
-        return {
+        const result = {
           provider: 'iqair',
           lat: latitude,
           lng: longitude,
@@ -68,6 +78,8 @@ export class EnvironmentService {
           country: data?.data?.country ?? null,
           updatedAt: new Date().toISOString(),
         };
+        this.aqiCache.set(cacheKey, { data: result, expiresAt: Date.now() + this.CACHE_TTL_MS });
+        return result;
       } catch {
         // fall through to OpenWeather/mock
       } finally {
@@ -77,7 +89,7 @@ export class EnvironmentService {
 
     const key = this.config.get<string>('OPENWEATHER_API_KEY') ?? '';
     if (!key) {
-      return {
+      const result = {
         provider: 'mock',
         lat: latitude,
         lng: longitude,
@@ -85,6 +97,8 @@ export class EnvironmentService {
         category: '普通',
         updatedAt: new Date().toISOString(),
       };
+      this.aqiCache.set(cacheKey, { data: result, expiresAt: Date.now() + this.CACHE_TTL_MS });
+      return result;
     }
 
     const ctrl = new AbortController();
@@ -104,7 +118,7 @@ export class EnvironmentService {
       if (!Number.isFinite(pm25)) throw new Error('OpenWeather air pollution: missing pm2_5');
       const aqiValue = pm25ToUsAqi(pm25);
 
-      return {
+      const result = {
         provider: 'openweather',
         lat: latitude,
         lng: longitude,
@@ -114,8 +128,10 @@ export class EnvironmentService {
         openWeatherAqiIndex: Number.isFinite(openWeatherAqiIndex) ? openWeatherAqiIndex : null,
         updatedAt: new Date().toISOString(),
       };
+      this.aqiCache.set(cacheKey, { data: result, expiresAt: Date.now() + this.CACHE_TTL_MS });
+      return result;
     } catch {
-      return {
+      const result = {
         provider: 'mock',
         lat: latitude,
         lng: longitude,
@@ -123,6 +139,8 @@ export class EnvironmentService {
         category: '普通',
         updatedAt: new Date().toISOString(),
       };
+      this.aqiCache.set(cacheKey, { data: result, expiresAt: Date.now() + this.CACHE_TTL_MS });
+      return result;
     } finally {
       clearTimeout(t);
     }
@@ -132,8 +150,15 @@ export class EnvironmentService {
     const key = this.config.get<string>('OPENWEATHER_API_KEY') ?? '';
     const latitude = lat ? Number(lat) : 21.0285;
     const longitude = lng ? Number(lng) : 105.8542;
+
+    const cacheKey = `${latitude.toFixed(3)},${longitude.toFixed(3)}`;
+    const cached = this.weatherCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.data;
+    }
+
     if (!key) {
-      return {
+      const result = {
         provider: 'mock',
         lat: latitude,
         lng: longitude,
@@ -141,6 +166,8 @@ export class EnvironmentService {
         humidity: 70,
         updatedAt: new Date().toISOString(),
       };
+      this.weatherCache.set(cacheKey, { data: result, expiresAt: Date.now() + this.CACHE_TTL_MS });
+      return result;
     }
 
     const ctrl = new AbortController();
@@ -161,7 +188,7 @@ export class EnvironmentService {
 
       if (!Number.isFinite(tempC) || !Number.isFinite(humidity)) throw new Error('OpenWeather: missing main');
 
-      return {
+      const result = {
         provider: 'openweather',
         lat: latitude,
         lng: longitude,
@@ -170,8 +197,10 @@ export class EnvironmentService {
         description: description || undefined,
         updatedAt: new Date().toISOString(),
       };
+      this.weatherCache.set(cacheKey, { data: result, expiresAt: Date.now() + this.CACHE_TTL_MS });
+      return result;
     } catch {
-      return {
+      const result = {
         provider: 'mock',
         lat: latitude,
         lng: longitude,
@@ -179,6 +208,8 @@ export class EnvironmentService {
         humidity: 70,
         updatedAt: new Date().toISOString(),
       };
+      this.weatherCache.set(cacheKey, { data: result, expiresAt: Date.now() + this.CACHE_TTL_MS });
+      return result;
     } finally {
       clearTimeout(t);
     }
